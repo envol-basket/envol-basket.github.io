@@ -686,7 +686,7 @@ function vEffectif(){
       <span class="small muted" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.role==="coach"?"Coach":(p.parents||[]).filter(x=>x&&x.prenom).map(x=>esc(x.prenom+" "+x.nom)).join(" · ")||"Joueur"}</span></span>
     ${isCoach() ? (p.licence ? `<button class="licence set" data-act="licence" data-id="${p.id}">Lic. ${esc(p.licence)} ✎</button>` : `<button class="licence-btn" data-act="licence" data-id="${p.id}">+ Licence</button>`)
       : `<span class="licence ${p.licence?"set":""}">${p.licence?"Lic. "+esc(p.licence):"Licence —"}</span>`}
-    ${isCoach() ? kebab("p-"+p.id, p.id === meId() ? [["claim-new","Code pour un autre téléphone",p.id]] : [
+    ${isCoach() ? kebab("p-"+p.id, p.id === meId() ? [["claim-new","Code pour un autre téléphone",p.id],["owners-keep-me","Déconnecter mes autres téléphones",p.id]] : [
       ["claim-new","Code de connexion",p.id],
       ["role-toggle", p.role==="coach" ? "Repasser joueur" : "Nommer coach", p.id],
       ["owners-reset","Déconnecter ses téléphones",p.id],
@@ -1082,7 +1082,7 @@ document.addEventListener("click", async ev => {
       const list = D.profiles.slice().sort((a,b)=>fullName(a).localeCompare(fullName(b)));
       sheet(`${sheetHead("Retrouver mon profil")}<form id="claimf" class="pick">
         <label class="field"><span>Mon profil</span><select class="input" id="claim-p" required><option value="">Choisis ton nom…</option>${list.map(p=>`<option value="${p.id}">${esc(fullName(p))}</option>`).join("")}</select></label>
-        <label class="field"><span>Code donné par le coach</span><input class="input" id="claim-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" style="text-align:center;font-size:22px;letter-spacing:.25em;text-transform:uppercase"></label>
+        <label class="field"><span>Code donné par le coach</span><input class="input" id="claim-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="20" style="text-align:center;font-size:22px;letter-spacing:.25em;text-transform:uppercase"></label>
         <button class="btn gold block" type="submit">Retrouver mon profil</button></form>`); return; }
     case "claim-new": { if(!isCoach()) return; const p = prof(id); if(!p) return;
       const code = newClaimCode();
@@ -1093,6 +1093,8 @@ document.addEventListener("click", async ev => {
         <button class="btn block" data-act="close">OK</button>`); return; }
     case "owners-reset": { if(!isCoach()) return; const p = prof(id); if(!p || p.id === meId()) return;
       confirmSheet("Déconnecter tous les téléphones de "+esc(fullName(p))+" ?", "Le profil et son historique sont gardés. Il faudra un nouveau code pour l'utiliser à nouveau.", ()=>safe(store.update("profiles", id, {owners:{}}), "Téléphones déconnectés")); return; }
+    case "owners-keep-me": { const m = me(); if(!m || m.id !== id) return;
+      confirmSheet("Déconnecter tes autres téléphones ?", "Seul ce téléphone gardera l'accès à ton profil.", ()=>safe(store.update("profiles", id, {owners:{}}).then(()=>store.update("profiles", id, {owners:{[myUid()]:true}})), "Seul ce téléphone a accès à ton profil")); return; }
     case "role-toggle": { if(!isCoach()) return; const p = prof(id); if(!p || p.id === meId()) return;
       const to = p.role === "coach" ? "joueur" : "coach";
       safe(store.update("profiles", id, {role:to}), fullName(p)+(to==="coach"?" est maintenant coach":" est maintenant joueur")); return; }    case "profile-form": profileForm(false); return;
@@ -1197,7 +1199,8 @@ document.addEventListener("submit", async ev => {
     const pid = val("claim-p"), code = normCode(val("claim-code")), p = prof(pid), u = myUid();
     if(!p){ toast("Choisis ton nom dans la liste."); return; }
     if(!u){ toast("Connexion en cours, réessaie dans un instant."); return; }
-    const ok = p.claim && p.claim.exp > Date.now() && p.claim.hash === await sha256("claim:"+code);
+    const coachOk = p.role === "coach" && !!CFG.coachCodeHash && (await sha256("coach:"+code)) === CFG.coachCodeHash;
+    const ok = coachOk || (p.claim && p.claim.exp > Date.now() && p.claim.hash === await sha256("claim:"+code));
     if(!ok){ toast("Code incorrect ou expiré. Demande un nouveau code au coach."); return; }
     if(await safe(store.update("profiles", pid, {owners:{[u]:true}, claim:null}), "Profil retrouvé !")){ closeSheet(); go("home"); }
     return;
