@@ -320,7 +320,7 @@ function deepMerge(a, b){
   for(const k in b){
     const v = b[k];
     if(v === null) delete out[k];
-    else if(v && typeof v === "object" && !Array.isArray(v) && out[k] && typeof out[k] === "object" && !Array.isArray(out[k])) out[k] = deepMerge(out[k], v);
+    else if(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length && out[k] && typeof out[k] === "object" && !Array.isArray(out[k])) out[k] = deepMerge(out[k], v);
     else out[k] = v;
   }
   return out;
@@ -440,8 +440,29 @@ function demoSeed(){
 }
 
 /* ---------- profils ---------- */
-const meId = () => ls.get("envol-me");
-const me = () => D.profiles.find(p => p.id === meId()) || null;
+/* Chaque téléphone a son identifiant (connexion anonyme Firebase). Un profil appartient aux téléphones listés dans "owners". */
+function myUid(){
+  if(MODE === "live"){ try{ return firebase.auth().currentUser?.uid || null; }catch(e){ return null; } }
+  let u = ls.get("envol-uid"); if(!u){ u = "d" + uid(); ls.set("envol-uid", u); } return u;
+}
+const ownsProfile = p => { const u = myUid(); return !!(u && p && p.owners && p.owners[u]); };
+const meId = () => me()?.id || null;
+const me = () => D.profiles.find(ownsProfile) || null;
+/* Ancienne version : le profil choisi sur ce téléphone, s'il n'appartient encore à personne, est rattaché à ce téléphone. */
+let migrating = false;
+function migrateLegacy(){
+  if(migrating || me()) return;
+  const legacy = ls.get("envol-me"); const u = myUid();
+  const p = legacy && u && D.profiles.find(x => x.id === legacy);
+  if(p && !(p.owners && Object.keys(p.owners).length)){
+    migrating = true;
+    store.update("profiles", p.id, {owners:{[u]:true}}).catch(()=>{}).finally(()=>{ migrating = false; });
+  }
+  if(p && p.owners && Object.keys(p.owners).length && !p.owners[u]) ls.del("envol-me");
+}
+const hasCoach = () => D.profiles.some(p => p.role === "coach");
+const CLAIM_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+function newClaimCode(){ const a = new Uint32Array(6); crypto.getRandomValues(a); return [...a].map(n => CLAIM_CHARS[n % CLAIM_CHARS.length]).join(""); }
 const isCoach = () => me()?.role === "coach";
 const prof = id => D.profiles.find(p => p.id === id);
 const fullName = p => p ? (p.prenom+" "+p.nom).trim() : "Profil supprimé";
@@ -473,6 +494,7 @@ function go(view, id=null){ S.view = view; S.id = id; S.menu = null; render(); w
 function render(){
   const app = $("#app");
   if(MODE === "loading" || !loaded.has("profiles")) return;
+  migrateLegacy();
   if(!me()){ app.innerHTML = renderWelcome(); return; }
   const m = me();
   let body = "";
@@ -502,10 +524,9 @@ function renderWelcome(){
   return `<main class="wrap" style="padding-block:28px 48px">
     <div class="hero-logo"><img alt="EN.V.O.L PLC/ESG" src="${LOGO}" style="width:170px"></div>
     <h1 class="h1" style="text-align:center">Bienvenue dans l'équipe</h1>
-    <p class="muted" style="text-align:center;margin:0">Choisis ton profil s'il existe déjà, sinon crée-le. Ce téléphone s'en souviendra.</p>
-    ${list.length ? `<div class="h2">Déjà inscrits</div><div class="list">${list.map(p => `
-      <button class="line" data-act="pick-me" data-id="${p.id}">${avatar(p,40)}<span class="grow"><span class="t" style="display:block">${esc(fullName(p))}</span><span class="small muted">${roleLabel(p)}</span></span><span class="chev">C'est moi ›</span></button>`).join("")}</div>` : ""}
+    <p class="muted" style="text-align:center;margin:0">Crée ton profil : il sera rattaché à ce téléphone, personne d'autre ne pourra l'utiliser.</p>
     <button class="btn gold block" data-act="profile-form">Créer mon profil</button>
+    ${list.length ? `<div class="card" style="gap:8px"><b>Tu as déjà un profil ?</b><span class="small muted">Nouveau téléphone, ou deuxième parent : demande un code au coach (onglet Effectif) pour retrouver le profil sur ce téléphone.</span><button class="btn" data-act="claim-form">J'ai un code du coach</button></div>` : ""}
   </main>`;
 }
 
@@ -665,7 +686,11 @@ function vEffectif(){
       <span class="small muted" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.role==="coach"?"Coach":(p.parents||[]).filter(x=>x&&x.prenom).map(x=>esc(x.prenom+" "+x.nom)).join(" · ")||"Joueur"}</span></span>
     ${isCoach() ? (p.licence ? `<button class="licence set" data-act="licence" data-id="${p.id}">Lic. ${esc(p.licence)} ✎</button>` : `<button class="licence-btn" data-act="licence" data-id="${p.id}">+ Licence</button>`)
       : `<span class="licence ${p.licence?"set":""}">${p.licence?"Lic. "+esc(p.licence):"Licence —"}</span>`}
-    ${isCoach() && p.id !== meId() ? `<button class="del-p" data-act="profile-del" data-id="${p.id}" aria-label="Supprimer le profil de ${esc(fullName(p))}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>` : ""}
+    ${isCoach() ? kebab("p-"+p.id, p.id === meId() ? [["claim-new","Code pour un autre téléphone",p.id]] : [
+      ["claim-new","Code de connexion",p.id],
+      ["role-toggle", p.role==="coach" ? "Repasser joueur" : "Nommer coach", p.id],
+      ["owners-reset","Déconnecter ses téléphones",p.id],
+      ["profile-del","Supprimer le profil",p.id,"del"]]) : ""}
   </div>`;
   return `<h1 class="h1">Effectif</h1>
   <div class="h2">Coachs · ${coachs.length}</div>
@@ -934,7 +959,7 @@ function drawProfileForm(edit){
   <form id="pf" class="pick">
     <div class="two"><label class="field"><span>Prénom</span><input class="input" id="pf-prenom" required value="${esc(p.prenom)}" autocomplete="given-name"></label>
     <label class="field"><span>Nom</span><input class="input" id="pf-nom" required value="${esc(p.nom)}" autocomplete="family-name"></label></div>
-    <div class="field"><span>Je suis</span><div class="seg"><button type="button" data-act="pf-role" data-v="joueur" aria-pressed="${p.role!=="coach"}">Joueur</button><button type="button" data-act="pf-role" data-v="coach" aria-pressed="${p.role==="coach"}">Coach</button></div></div>
+    ${!hasCoach() ? `<div class="field"><span>Je suis</span><div class="seg"><button type="button" data-act="pf-role" data-v="joueur" aria-pressed="${p.role!=="coach"}">Joueur</button><button type="button" data-act="pf-role" data-v="coach" aria-pressed="${p.role==="coach"}">Coach</button></div><span class="small muted">Le premier coach inscrit pourra ensuite nommer les autres coachs.</span></div>` : ""}
     ${p.role!=="coach"?`<label class="field"><span>Numéro de maillot (facultatif)</span><input class="input" id="pf-num" inputmode="numeric" maxlength="3" value="${esc(p.numero||"")}"></label>
     <fieldset class="fieldset"><legend>Parents (pour le covoiturage)</legend>
       ${[0,1].map(i=>`<div class="two"><label class="field"><span>Parent ${i+1} · prénom</span><input class="input" id="pf-p${i}-prenom" value="${esc(p.parents[i].prenom)}"></label><label class="field"><span>Nom</span><input class="input" id="pf-p${i}-nom" value="${esc(p.parents[i].nom)}"></label></div>`).join("")}
@@ -1053,15 +1078,30 @@ document.addEventListener("click", async ev => {
     case "close-bg": if(ev.target === a) closeSheet(); return;
     case "close": closeSheet(); return;
     case "menu": ev.stopPropagation(); S.menu = S.menu === a.dataset.key ? null : a.dataset.key; render(); return;
-    case "pick-me": ls.set("envol-me", id); go("home"); return;
-    case "profile-form": profileForm(false); return;
+    case "claim-form": {
+      const list = D.profiles.slice().sort((a,b)=>fullName(a).localeCompare(fullName(b)));
+      sheet(`${sheetHead("Retrouver mon profil")}<form id="claimf" class="pick">
+        <label class="field"><span>Mon profil</span><select class="input" id="claim-p" required><option value="">Choisis ton nom…</option>${list.map(p=>`<option value="${p.id}">${esc(fullName(p))}</option>`).join("")}</select></label>
+        <label class="field"><span>Code donné par le coach</span><input class="input" id="claim-code" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="6" style="text-align:center;font-size:22px;letter-spacing:.25em;text-transform:uppercase"></label>
+        <button class="btn gold block" type="submit">Retrouver mon profil</button></form>`); return; }
+    case "claim-new": { if(!isCoach()) return; const p = prof(id); if(!p) return;
+      const code = newClaimCode();
+      if(!(await safe(store.update("profiles", id, {claim:{hash:await sha256("claim:"+code), exp:Date.now()+48*3600*1000}})))) return;
+      sheet(`${sheetHead("Code de connexion")}<div class="row">${avatar(p,40)}<b>${esc(fullName(p))}</b></div>
+        <div style="font-family:var(--display);font-weight:800;font-size:44px;letter-spacing:.2em;text-align:center;color:var(--gold-hi)">${code}</div>
+        <p class="small muted" style="margin:0">Donne ce code à ${esc(p.prenom)} (ou à son parent). Sur son téléphone : « J'ai un code du coach ». Le code sert une seule fois et expire dans 48 h.</p>
+        <button class="btn block" data-act="close">OK</button>`); return; }
+    case "owners-reset": { if(!isCoach()) return; const p = prof(id); if(!p || p.id === meId()) return;
+      confirmSheet("Déconnecter tous les téléphones de "+esc(fullName(p))+" ?", "Le profil et son historique sont gardés. Il faudra un nouveau code pour l'utiliser à nouveau.", ()=>safe(store.update("profiles", id, {owners:{}}), "Téléphones déconnectés")); return; }
+    case "role-toggle": { if(!isCoach()) return; const p = prof(id); if(!p || p.id === meId()) return;
+      const to = p.role === "coach" ? "joueur" : "coach";
+      safe(store.update("profiles", id, {role:to}), fullName(p)+(to==="coach"?" est maintenant coach":" est maintenant joueur")); return; }    case "profile-form": profileForm(false); return;
     case "profile-sheet":
       sheet(`${sheetHead("Profil")}<div class="row">${avatar(my,56)}<div><b style="font-size:18px">${esc(fullName(my))}</b><div class="small muted">${roleLabel(my)}${my.licence?" · Licence "+esc(my.licence):""}</div></div></div>
         <button class="btn block" data-act="profile-edit">Modifier mon profil</button>
-        <button class="btn ghost block" data-act="switch">Changer de profil sur ce téléphone</button>
+        <p class="small muted" style="margin:0">Ton profil est rattaché à ce téléphone. Pour l'utiliser sur un autre téléphone (ou pour l'autre parent), demande un code au coach.</p>
         ${MODE==="demo"?`<button class="btn danger block" data-act="reset">Réinitialiser la démo</button>`:""}`); return;
     case "profile-edit": profileForm(true); return;
-    case "switch": ls.del("envol-me"); closeSheet(); go("home"); return;
     case "reset": ls.del("envol-demo"); ls.del("envol-me"); location.reload(); return;
     case "pf-role": readProfileDraft(); draft.role = a.dataset.v; drawProfileForm(!!$("#pf").dataset.edit); return;
     case "pf-color": readProfileDraft(); draft.avatar = {...draft.avatar, color:a.dataset.v}; drawProfileForm(!!$("#pf").dataset.edit); return;
@@ -1153,13 +1193,26 @@ document.addEventListener("submit", async ev => {
     else renderCode("Ce code n'est pas le bon. Demande-le au coach.");
     return;
   }
+  if(f.id === "claimf"){
+    const pid = val("claim-p"), code = normCode(val("claim-code")), p = prof(pid), u = myUid();
+    if(!p){ toast("Choisis ton nom dans la liste."); return; }
+    if(!u){ toast("Connexion en cours, réessaie dans un instant."); return; }
+    const ok = p.claim && p.claim.exp > Date.now() && p.claim.hash === await sha256("claim:"+code);
+    if(!ok){ toast("Code incorrect ou expiré. Demande un nouveau code au coach."); return; }
+    if(await safe(store.update("profiles", pid, {owners:{[u]:true}, claim:null}), "Profil retrouvé !")){ closeSheet(); go("home"); }
+    return;
+  }
   if(f.id === "pf"){
     readProfileDraft(); const p = draft;
     if(!p.prenom || !p.nom){ toast("Indique ton prénom et ton nom."); return; }
-    const doc = {prenom:p.prenom, nom:p.nom, role:p.role==="coach"?"coach":"joueur", numero:p.role==="coach"?"":(p.numero||""),
+    const role = f.dataset.edit ? (my.role || "joueur") : (!hasCoach() && p.role === "coach" ? "coach" : "joueur");
+    const owners = f.dataset.edit ? (my.owners || {}) : {[myUid()]:true};
+    if(!myUid()){ toast("Connexion en cours, réessaie dans un instant."); return; }
+    p.role = role;
+    const doc = {owners, prenom:p.prenom, nom:p.nom, role, numero:p.role==="coach"?"":(p.numero||""),
       parents:p.role==="coach"?[]:p.parents.filter(x=>x.prenom||x.nom), photo:p.photo||null, avatar:p.avatar, licence:p.licence||"", ts:p.ts||Date.now()};
     const id = f.dataset.edit ? my.id : uid();
-    if(await safe(store.set("profiles", id, doc), f.dataset.edit?"Profil mis à jour":"Bienvenue "+p.prenom+" !")){ ls.set("envol-me", id); closeSheet(); render(); }
+    if(await safe(store.set("profiles", id, doc), f.dataset.edit?"Profil mis à jour":"Bienvenue "+p.prenom+" !")){ closeSheet(); render(); }
   }
   if(f.id === "mf"){
     const d = {adversaire:val("mf-adv"), date:val("mf-date"), heure:val("mf-heure"), rdv:val("mf-rdv"), lieu:val("mf-lieu"), domicile:draft.domicile};
