@@ -11,6 +11,6 @@ window.ENVOL_CONFIG = {
     appId: "1:288383776481:web:c59ba912c24b00b1a2e9a0"
   },
   // coachCodeHash : empreinte du code coach (permet à un coach de retrouver son profil sur un nouveau téléphone)
-  coachCodeHash: "__COACH__",
+  coachCodeHash: "018212391803d1bcb2ae8017acff6b8d44827f179856400acebf1be114d0264b",
   teamCodeHash: "b9641b7fc7240fdb8a89b28e4224ff6ec653c9a73ca79f3dbe4b9696e0e95c20"
 };

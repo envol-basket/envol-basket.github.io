@@ -959,7 +959,8 @@ function drawProfileForm(edit){
   <form id="pf" class="pick">
     <div class="two"><label class="field"><span>Prénom</span><input class="input" id="pf-prenom" required value="${esc(p.prenom)}" autocomplete="given-name"></label>
     <label class="field"><span>Nom</span><input class="input" id="pf-nom" required value="${esc(p.nom)}" autocomplete="family-name"></label></div>
-    ${!hasCoach() ? `<div class="field"><span>Je suis</span><div class="seg"><button type="button" data-act="pf-role" data-v="joueur" aria-pressed="${p.role!=="coach"}">Joueur</button><button type="button" data-act="pf-role" data-v="coach" aria-pressed="${p.role==="coach"}">Coach</button></div><span class="small muted">Le premier coach inscrit pourra ensuite nommer les autres coachs.</span></div>` : ""}
+    ${!edit ? `<div class="field"><span>Je suis</span><div class="seg"><button type="button" data-act="pf-role" data-v="joueur" aria-pressed="${p.role!=="coach"}">Joueur</button><button type="button" data-act="pf-role" data-v="coach" aria-pressed="${p.role==="coach"}">Coach</button></div></div>
+    ${p.role==="coach" ? `<label class="field"><span>Code coach</span><input class="input" id="pf-coachcode" autocomplete="off" autocapitalize="characters" spellcheck="false" value="${esc(p.coachCode||"")}" style="letter-spacing:.15em;text-transform:uppercase"><span class="small muted">Demandé uniquement pour s'inscrire comme coach.</span></label>` : ""}` : ""}
     ${p.role!=="coach"?`<label class="field"><span>Numéro de maillot (facultatif)</span><input class="input" id="pf-num" inputmode="numeric" maxlength="3" value="${esc(p.numero||"")}"></label>
     <fieldset class="fieldset"><legend>Parents (pour le covoiturage)</legend>
       ${[0,1].map(i=>`<div class="two"><label class="field"><span>Parent ${i+1} · prénom</span><input class="input" id="pf-p${i}-prenom" value="${esc(p.parents[i].prenom)}"></label><label class="field"><span>Nom</span><input class="input" id="pf-p${i}-nom" value="${esc(p.parents[i].nom)}"></label></div>`).join("")}
@@ -983,6 +984,7 @@ function readProfileDraft(){
   if($("#pf-prenom")) p.prenom = val("pf-prenom");
   if($("#pf-nom")) p.nom = val("pf-nom");
   if($("#pf-num")) p.numero = val("pf-num");
+  if($("#pf-coachcode")) p.coachCode = val("pf-coachcode");
   [0,1].forEach(i => { if($(`#pf-p${i}-prenom`)) p.parents[i] = {prenom:val(`pf-p${i}-prenom`), nom:val(`pf-p${i}-nom`)}; });
 }
 
@@ -1208,7 +1210,8 @@ document.addEventListener("submit", async ev => {
   if(f.id === "pf"){
     readProfileDraft(); const p = draft;
     if(!p.prenom || !p.nom){ toast("Indique ton prénom et ton nom."); return; }
-    const role = f.dataset.edit ? (my.role || "joueur") : (!hasCoach() && p.role === "coach" ? "coach" : "joueur");
+    if(!f.dataset.edit && p.role === "coach" && !(CFG.coachCodeHash && (await sha256("coach:"+normCode(p.coachCode))) === CFG.coachCodeHash)){ toast("Code coach incorrect."); return; }
+    const role = f.dataset.edit ? (my.role || "joueur") : (p.role === "coach" ? "coach" : "joueur");
     const owners = f.dataset.edit ? (my.owners || {}) : {[myUid()]:true};
     if(!myUid()){ toast("Connexion en cours, réessaie dans un instant."); return; }
     p.role = role;
