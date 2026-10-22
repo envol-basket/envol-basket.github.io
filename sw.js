@@ -1,5 +1,5 @@
 // Cache léger : l'appli s'ouvre même avec un réseau faible ; les pages sont toujours rechargées en priorité depuis le réseau.
-const CACHE = "envol-v5";
+const CACHE = "envol-v6";
 const SHELL = ["./", "index.html", "config.js", "logo.png", "mark.png", "manifest.webmanifest", "icons/icon-192.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
