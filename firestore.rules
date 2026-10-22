@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Les données de l'équipe sont rangées sous teams/<CODE ÉQUIPE>/...
+    // Il faut connaître le code pour y accéder, et être connecté via l'appli.
+    match /teams/{team}/{col}/{doc} {
+      allow read, write: if request.auth != null
+        && col in ['profiles', 'matches', 'events', 'cycles', 'messages', 'photos'];
+    }
+  }
+}

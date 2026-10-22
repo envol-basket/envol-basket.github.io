@@ -1,0 +1,1201 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ENVOL</title>
+<meta name="description" content="L'appli de l'équipe de basket EN.V.O.L (PLC/ESG)">
+<meta name="theme-color" content="#0b0a08">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ENVOL">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;1,700;1,800&family=Barlow:wght@400;500;600&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Layout : appli mobile une colonne — barre profil + onglets collants, cartes "parquet" noir et or, feuilles modales du bas */
+:root{
+  --bg:#0b0a08; --surface:#16140f; --surface-2:#201d15; --line:#353022;
+  --fg:#f5eedd; --muted:#aaa089; --gold:#e8b52a; --gold-hi:#f8d75c; --gold-deep:#b9871a; --on-gold:#1a1205;
+  --gold-grad:linear-gradient(135deg,#f9dc66 0%,#e8b52a 45%,#c9951d 70%,#f2c94a 100%);
+  --ok:#86c07c; --danger:#e07a66;
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font-family:var(--body);font-size:15px;line-height:1.45;min-height:100%;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0}
+:focus-visible{outline:2px solid var(--gold-hi);outline-offset:2px;border-radius:6px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* En-tête */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:radial-gradient(120% 90% at 50% 0%,#e8b52a1a,transparent 60%),var(--bg)}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold) 50%,transparent)}
+.bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding-block:8px 6px}
+.me{display:flex;align-items:center;gap:8px;min-width:0;text-align:left}
+.me-name{font-family:var(--display);font-weight:700;font-size:17px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1}
+.me-role{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.brand{display:grid;place-items:center;padding:2px 0 2px 6px;justify-self:end}
+.brand img{height:50px;width:auto;filter:drop-shadow(0 0 12px #e8b52a66)}
+.brand-word{font-family:var(--display);font-style:italic;font-weight:800;font-size:15px;letter-spacing:.22em;color:var(--gold);justify-self:end;white-space:nowrap;padding-right:2px}
+.brand-word small{display:block;font-size:9.5px;letter-spacing:.3em;font-style:normal;font-weight:600;color:var(--muted);text-align:right}
+@media (max-width:360px){.brand-word{display:none}}
+.vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;opacity:0}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding-block:0 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:none;padding:7px 13px;border-radius:999px;border:1px solid var(--line);font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.tab[aria-current="page"]{background:var(--gold-grad);border-color:var(--gold);color:var(--on-gold)}
+
+main{padding-block:16px 48px;display:flex;flex-direction:column;gap:14px}
+.hero-logo{display:flex;justify-content:center;padding-block:6px 4px}
+.hero-logo img{width:150px;height:auto}
+.h1{font-family:var(--display);font-style:italic;font-weight:800;font-size:30px;line-height:1;text-transform:uppercase;letter-spacing:.01em;text-wrap:balance;margin:0}
+.h2{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:4px 0 0}
+.row{display:flex;align-items:center;gap:10px}
+.between{justify-content:space-between}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Cartes */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;text-align:left;width:100%;min-width:0}
+button.card:active{transform:scale(.99)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.label{font-family:var(--display);font-weight:700;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.chev{color:var(--muted);font-size:13px}
+
+/* Carte match "prochain" : arc de raquette en filigrane */
+.next{position:relative;overflow:hidden;background:linear-gradient(160deg,var(--surface-2),var(--surface) 70%);border-color:var(--gold)}
+.next::after{content:"";position:absolute;right:-70px;bottom:-110px;width:220px;height:220px;border:1.5px solid var(--gold);border-radius:50%;opacity:.18;pointer-events:none}
+.vs{font-family:var(--display);font-style:italic;font-weight:800;text-transform:uppercase;line-height:1.02;font-size:30px;text-wrap:balance}
+.vs small{display:block;font-size:13px;font-style:normal;font-weight:700;letter-spacing:.18em;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fact{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px;min-width:0}
+.fact b{display:block;font-family:var(--display);font-weight:700;font-size:20px;line-height:1.1;font-variant-numeric:tabular-nums}
+.fact span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.fact.wide{grid-column:1/-1}
+.fact.wide b{font-size:16px;font-family:var(--body);font-weight:600;overflow-wrap:anywhere}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.chip.home{background:var(--gold-grad);color:var(--on-gold);border-color:var(--gold)}
+.chip.away{border-color:var(--gold);color:var(--gold-hi)}
+.chip.ok{border-color:var(--ok);color:var(--ok)}
+
+/* Encart prochain match : tableau de marque */
+.sb{display:flex;flex-direction:column;width:100%;text-align:left;border-radius:16px;overflow:visible;background:var(--surface);border:1px solid #e8b52a59;box-shadow:0 10px 28px #00000066}
+.sb:active{transform:scale(.99)}
+.sb-top .icon-btn{color:var(--on-gold);width:32px;height:32px;margin:-6px -8px -6px 0}
+.sb-top .icon-btn:hover{background:#1a12051f}
+.sb-top{border-radius:15px 15px 0 0;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:var(--gold-grad);color:var(--on-gold)}
+.sb-top .label{color:var(--on-gold);font-size:12px}
+.sb-top .chip{background:var(--on-gold);color:var(--gold-hi);border-color:var(--on-gold)}
+.sb-board{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:18px 12px 14px}
+.sb-team{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;min-width:0}
+.sb-team img{height:58px;width:auto;filter:drop-shadow(0 0 10px #e8b52a55)}
+.sb-badge{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--gold);background:radial-gradient(circle at 35% 30%,#e8b52a26,transparent 70%);font-family:var(--display);font-style:italic;font-weight:800;font-size:22px;letter-spacing:.02em;color:var(--gold-hi)}
+.sb-team b{font-family:var(--display);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;line-height:1.1;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.sb-clock{display:flex;flex-direction:column;align-items:center;gap:3px}
+.sb-clock>span:first-child{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sb-time{font-family:var(--display);font-weight:800;font-size:42px;line-height:1;color:var(--gold-hi);font-variant-numeric:tabular-nums;text-shadow:0 0 18px #e8b52a66}
+.sb-where{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border-radius:999px;border:1px solid var(--gold);color:var(--gold-hi)}
+.sb-where.home{background:var(--gold-grad);color:var(--on-gold);border-color:transparent}
+.sb-strip{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);border-top:1px solid var(--line)}
+.sb-strip>span{padding:9px 10px;text-align:center;min-width:0}
+.sb-strip>span+span{border-left:1px solid var(--line)}
+.sb-strip .k{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sb-strip b.num{font-family:var(--display);font-weight:700;font-size:19px;font-variant-numeric:tabular-nums}
+.sb-strip b.txt{display:block;font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.sb-foot{display:flex;justify-content:space-between;gap:8px;padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+.sb-foot b{color:var(--gold-hi)}
+/* Lignes de liste */
+.list{display:flex;flex-direction:column;gap:8px}
+.line{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 12px;text-align:left;width:100%;min-width:0}
+.line .grow{flex:1;min-width:0}
+.line .t{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.date-block{flex:none;width:48px;text-align:center;border-right:1px solid var(--line);padding-right:10px}
+.date-block b{display:block;font-family:var(--display);font-weight:800;font-size:24px;line-height:1;font-variant-numeric:tabular-nums}
+.date-block span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)}
+
+/* Avatars */
+.av{flex:none;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:var(--surface-2);color:var(--on-gold);font-family:var(--display);font-weight:800;font-style:italic}
+.av img{width:100%;height:100%;object-fit:cover}
+.av svg{width:58%;height:58%}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);font-weight:600}
+.btn.gold{background:var(--gold-grad);border-color:var(--gold);color:var(--on-gold)}
+.btn.on{background:var(--ok);border-color:var(--ok);color:var(--on-gold)}
+.btn.ghost{background:transparent}
+.btn.danger{color:var(--danger);border-color:var(--danger);background:transparent}
+.btn.block{width:100%}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.icon-btn{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:var(--muted);flex:none}
+.icon-btn:hover{background:var(--surface-2)}
+.add{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border:1.5px dashed var(--gold);border-radius:12px;color:var(--gold-hi);font-weight:600;width:100%}
+.back{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-weight:600;min-height:36px;align-self:flex-start}
+
+/* Menu ⋮ */
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:44px;z-index:5;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;min-width:160px;padding:6px;display:flex;flex-direction:column;box-shadow:0 12px 30px #0009}
+.menu button{text-align:left;padding:10px 12px;border-radius:8px;font-weight:600}
+.menu button:hover{background:var(--surface)}
+.menu .del{color:var(--danger)}
+
+/* Validation coach */
+.check{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:transparent;flex:none}
+.check.on{background:var(--ok);border-color:var(--ok);color:var(--on-gold)}
+.check[disabled]{cursor:default}
+
+/* Covoiturage */
+.car{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.seats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.seat{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:var(--surface);min-width:0;text-align:left}
+.seat.free{border-style:dashed;color:var(--gold-hi);justify-content:center;font-weight:600}
+.seat .grow{flex:1;min-width:0;font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.x{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;color:var(--muted);flex:none}
+.x:hover{background:var(--surface-2);color:var(--danger)}
+
+/* Messages */
+.post{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.post p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.comments{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:10px}
+.cmt{display:flex;gap:9px;min-width:0}
+.cmt .bubble{flex:1;min-width:0;background:var(--bg);border-radius:10px;padding:8px 10px}
+.cmt p{font-size:14px}
+.mini-msg{display:flex;gap:10px;min-width:0}
+.mini-msg p{margin:0;font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+
+/* Photos */
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.grid button{aspect-ratio:1;max-width:100%;border-radius:6px;overflow:hidden;background:var(--surface-2)}
+.grid img{width:100%;height:100%;object-fit:cover}
+.last-photo{width:100%;aspect-ratio:16/10;max-width:100%;object-fit:cover;border-radius:10px;background:var(--surface-2)}
+
+/* Cycle */
+.session{display:flex;flex-direction:column;gap:8px}
+.session h3{margin:0;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.1;text-wrap:balance}
+.session p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.tip{border:1px solid var(--gold);border-radius:12px;padding:10px 12px;background:var(--surface-2)}
+.tip .label{display:block;margin-bottom:4px}
+.day{font-family:var(--display);font-style:italic;font-weight:800;font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--on-gold);background:var(--gold-grad);align-self:flex-start;padding:2px 10px;border-radius:6px}
+
+/* Effectif */
+.licence{font-variant-numeric:tabular-nums;font-size:13px;color:var(--muted);text-align:right;flex:none;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.licence.set{color:var(--fg)}
+.del-p{flex:none;width:30px;height:30px;margin-right:-4px;border-radius:8px;display:grid;place-items:center;color:var(--muted);opacity:.55}
+.del-p:hover,.del-p:focus-visible{opacity:1;color:var(--danger);background:var(--surface-2)}
+.licence-btn{border:1px dashed var(--gold);border-radius:8px;padding:5px 8px;color:var(--gold-hi);font-size:12px;font-weight:600;flex:none}
+.jersey{font-family:var(--display);font-weight:800;font-style:italic;color:var(--gold);font-size:18px;width:30px;text-align:center;flex:none}
+
+/* Règles */
+.rules-intro{margin:0;color:var(--muted)}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.rule summary{list-style:none;display:flex;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;min-height:52px}
+.rule summary::-webkit-details-marker{display:none}
+.rule-ico{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;background:var(--surface-2);color:var(--gold);font-family:var(--display);font-weight:800;font-style:italic;font-size:15px;font-variant-numeric:tabular-nums}
+.rule-t{flex:1;min-width:0;font-weight:600;font-size:15.5px;line-height:1.25}
+.rule-t small{display:block;font-weight:400;font-size:12.5px;color:var(--muted);margin-top:2px}
+.rule .plus{flex:none;color:var(--gold);width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e8b52a1f;transition:transform .2s}
+.rule[open] .plus{transform:rotate(180deg)}
+.rule[open]{border-color:var(--gold-deep)}
+.rule-body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.rule-body p{margin:0;max-width:62ch}
+.rule-body ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.whistle{display:flex;gap:8px;align-items:flex-start;background:linear-gradient(135deg,#f9dc6626,#e8b52a17);border:1px solid #e8b52a66;border-radius:10px;padding:9px 11px;font-size:14px}
+.whistle b{color:var(--gold-hi);font-family:var(--display);letter-spacing:.08em;text-transform:uppercase;font-size:13px;flex:none;padding-top:1px}
+.key-nums{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px}
+.key-nums div{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.key-nums b{display:block;font-family:var(--display);font-weight:800;font-size:22px;color:var(--gold-hi);font-variant-numeric:tabular-nums;line-height:1.1}
+.key-nums span{font-size:12px;color:var(--muted)}
+.court{width:100%;max-width:100%;height:auto;display:block}
+.u13-btn{display:flex;align-items:center;gap:12px;padding:14px;border-radius:var(--r);background:var(--gold-grad);color:var(--on-gold);text-align:left;width:100%}
+.u13-btn b{display:block;font-family:var(--display);font-style:italic;font-weight:800;font-size:22px;text-transform:uppercase;line-height:1}
+.u13-btn span{font-size:13px;font-weight:500}
+.empty{border:1px dashed var(--line);border-radius:var(--r);padding:18px;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:10px;align-items:center}
+.banner{font-size:12.5px;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--surface)}
+
+/* Feuilles modales */
+.sheet-bg{position:fixed;inset:0;z-index:40;background:#000b;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:560px;max-height:92%;overflow:auto;background:var(--surface);border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;padding:18px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:14px}
+.sheet h2{margin:0;font-family:var(--display);font-style:italic;font-weight:800;font-size:26px;text-transform:uppercase}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.input{width:100%;min-height:44px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+textarea.input{min-height:92px;resize:vertical}
+.input:focus{outline:none;border-color:var(--gold)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;background:var(--bg)}
+.seg button{min-height:40px;border-radius:9px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--gold);color:var(--on-gold)}
+.toggle{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.toggle input{width:20px;height:20px;accent-color:var(--gold)}
+.swatches{display:flex;flex-wrap:wrap;gap:8px}
+.sw{width:40px;height:40px;border-radius:50%;border:2px solid transparent;display:grid;place-items:center}
+.sw[aria-pressed="true"]{border-color:var(--fg)}
+.fieldset{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.fieldset legend{padding:0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.pick{display:flex;flex-direction:column;gap:8px}
+
+.viewer{position:fixed;inset:0;z-index:45;background:#000;display:flex;flex-direction:column}
+.viewer img{flex:1;min-height:0;width:100%;object-fit:contain}
+.viewer .bar{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.viewer .foot{padding:12px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));color:#ddd}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;max-width:calc(100% - 32px)}
+.loading{display:grid;place-items:center;min-height:60vh;gap:14px;text-align:center}
+.loading img{width:110px;opacity:.9}
+@media (prefers-reduced-motion:no-preference){
+  .sheet{animation:up .22s ease-out}
+  @keyframes up{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
+}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><div><img alt="EN.V.O.L" src="logo.png"><p class="muted">Chargement de l'équipe…</p></div></div></div>
+<div id="layer"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="config.js"></script>
+<input id="photo-input" class="vh" type="file" accept="image/*" multiple tabindex="-1" aria-hidden="true">
+<input id="avatar-input" class="vh" type="file" accept="image/*" tabindex="-1" aria-hidden="true">
+
+<script>
+const LOGO = "logo.png";
+const MARK = "mark.png";
+const COLS = ["profiles","matches","events","cycles","messages","photos"];
+const D = {profiles:[],matches:[],events:[],cycles:[],messages:[],photos:[]};
+const loaded = new Set();
+let MODE = "loading"; // "live" | "demo"
+let dbRef = null;
+const S = {view:"home", id:null, menu:null};
+
+/* ---------- utilitaires ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+const ls = {
+  get(k){ try{ return localStorage.getItem(k) }catch(e){ return null } },
+  set(k,v){ try{ localStorage.setItem(k,v) }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k) }catch(e){} }
+};
+const pad = n => String(n).padStart(2,"0");
+const todayStr = () => { const d = new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+const JOURS = ["dim.","lun.","mar.","mer.","jeu.","ven.","sam."];
+const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+function parseD(s){ if(!s) return null; const [y,m,d] = s.split("-").map(Number); return new Date(y,m-1,d); }
+function fmtDate(s, long){ const d = parseD(s); if(!d) return ""; return long ? JOURS[d.getDay()]+" "+d.getDate()+" "+MOIS[d.getMonth()] : d.getDate()+" "+MOIS[d.getMonth()]; }
+function daysTo(s){ const d = parseD(s); const t = parseD(todayStr()); return Math.round((d - t)/86400000); }
+function countdown(s){ const n = daysTo(s); return n===0 ? "Aujourd'hui" : n===1 ? "Demain" : n>1 ? "J-"+n : ""; }
+function ago(ts){ const m = Math.round((Date.now()-ts)/60000); if(m<1) return "à l'instant"; if(m<60) return "il y a "+m+" min"; const h = Math.round(m/60); if(h<24) return "il y a "+h+" h"; const d = new Date(ts); return d.getDate()+" "+MOIS[d.getMonth()]; }
+const on = o => o && typeof o === "object" ? Object.keys(o).filter(k => o[k]) : [];
+function toast(t){ const el = document.createElement("div"); el.className="toast"; el.textContent=t; document.body.appendChild(el); setTimeout(()=>el.remove(), 2400); }
+
+/* Firestore remplace un objet imbriqué en entier : on écrit champ par champ ("presence.abc"), null = suppression */
+function toPaths(patch, prefix, out){
+  out = out || {}; prefix = prefix || "";
+  for(const k in patch){
+    const v = patch[k], key = prefix + k;
+    if(v === null) out[key] = firebase.firestore.FieldValue.delete();
+    else if(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length) toPaths(v, key + ".", out);
+    else out[key] = v;
+  }
+  return out;
+}
+/* ---------- stockage : base partagée (live) ou démo locale ---------- */
+function deepMerge(a, b){
+  const out = Array.isArray(a) ? a.slice() : {...(a||{})};
+  for(const k in b){
+    const v = b[k];
+    if(v === null) delete out[k];
+    else if(v && typeof v === "object" && !Array.isArray(v) && out[k] && typeof out[k] === "object" && !Array.isArray(out[k])) out[k] = deepMerge(out[k], v);
+    else out[k] = v;
+  }
+  return out;
+}
+const queues = {};
+function queued(key, fn){ const p = (queues[key] || Promise.resolve()).then(fn, fn); queues[key] = p.catch(()=>{}); return p; }
+function saveDemo(){ const o = {}; COLS.forEach(c => o[c] = D[c]); ls.set("envol-demo", JSON.stringify(o)); }
+const store = {
+  async set(col, id, data){
+    if(MODE === "live") return queued(col+"/"+id, () => dbRef.collection(col).doc(id).set(data));
+    const i = D[col].findIndex(x => x.id === id); const doc = {...data, id};
+    if(i>=0) D[col][i] = doc; else D[col].push(doc); saveDemo(); render();
+  },
+  async update(col, id, patch){
+    if(MODE === "live") return queued(col+"/"+id, () => dbRef.collection(col).doc(id).update(toPaths(patch)));
+    const i = D[col].findIndex(x => x.id === id); if(i<0) return;
+    D[col][i] = deepMerge(D[col][i], patch); saveDemo(); render();
+  },
+  async del(col, id){
+    if(MODE === "live") return queued(col+"/"+id, () => dbRef.collection(col).doc(id).delete());
+    D[col] = D[col].filter(x => x.id !== id); saveDemo(); render();
+  }
+};
+async function safe(p, okMsg){
+  try{ await p; if(okMsg) toast(okMsg); return true; }
+  catch(e){
+    const c = e && e.code;
+    toast(c==="permission-denied" ? "Accès refusé : vérifie le code équipe." : c==="resource-exhausted" ? "Limite gratuite atteinte pour aujourd'hui, réessaie demain." : c==="quota_exceeded" ? "Stockage plein : supprime quelques photos." : c==="invalid_argument" ? "Fichier trop lourd, essaie une photo plus petite." : "Échec de l'enregistrement, réessaie.");
+    return false;
+  }
+}
+
+const CFG = window.ENVOL_CONFIG || {};
+const hasFirebase = () => !!(CFG.firebase && CFG.firebase.apiKey && window.firebase);
+const normCode = c => String(c||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
+async function sha256(t){ const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join(""); }
+async function checkCode(c){ return !!c && (await sha256("envol:" + c)) === CFG.teamCodeHash; }
+let fbReady = null;
+function initFirebase(){
+  if(fbReady) return fbReady;
+  firebase.initializeApp(CFG.firebase);
+  const fs = firebase.firestore();
+  try{ fs.enablePersistence({synchronizeTabs:true}).catch(()=>{}); }catch(e){}
+  fbReady = firebase.auth().signInAnonymously().then(() => fs);
+  fbReady.catch(() => { fbReady = null; });
+  return fbReady;
+}
+let started = false;
+async function boot(){
+  if(!hasFirebase()) return startDemo();
+  const code = normCode(ls.get("envol-team"));
+  if(!(await checkCode(code))){ MODE = "code"; renderCode(); return; }
+  let fs;
+  try{ fs = await initFirebase(); }
+  catch(e){ console.error(e); $("#app").innerHTML = `<main class="wrap" style="padding-block:40px"><div class="empty">Connexion impossible pour l'instant. Vérifie ta connexion internet puis réessaie.<button class="btn gold" onclick="location.reload()">Réessayer</button></div></main>`; return; }
+  if(started) return; started = true;
+  const db = fs.collection("teams").doc(code);
+  {
+    MODE = "live"; dbRef = db;
+    const q = {
+      profiles: db.collection("profiles"),
+      matches: db.collection("matches"),
+      events: db.collection("events"),
+      cycles: db.collection("cycles"),
+      messages: db.collection("messages").orderBy("ts","desc").limit(100),
+      photos: db.collection("photos").orderBy("ts","desc").limit(60)
+    };
+    COLS.forEach(c => {
+      q[c].onSnapshot(snap => {
+        D[c] = snap.docs.map(d => ({...d.data(), id:d.id}));
+        loaded.add(c); render();
+      }, err => { loaded.add(c); render(); });
+    });
+    setTimeout(() => { COLS.forEach(c => loaded.add(c)); render(); }, 6000);
+  }
+}
+function renderCode(err){
+  $("#app").innerHTML = `<main class="wrap" style="padding-block:36px 48px">
+    <div class="hero-logo"><img alt="EN.V.O.L PLC/ESG" src="${LOGO}" style="width:150px"></div>
+    <h1 class="h1" style="text-align:center">Code équipe</h1>
+    <p class="muted" style="text-align:center;margin:0">Entre le code donné par le coach. Tu ne le saisiras qu'une seule fois sur ce téléphone.</p>
+    <form id="codef" class="pick">
+      <label class="field"><span>Code</span><input class="input" id="code-in" autocomplete="off" autocapitalize="characters" spellcheck="false" style="text-align:center;font-size:22px;letter-spacing:.2em;text-transform:uppercase"></label>
+      ${err?`<p style="margin:0;color:var(--danger);text-align:center">${err}</p>`:""}
+      <button class="btn gold block" type="submit">Entrer</button>
+    </form>
+  </main>`;
+  setTimeout(()=>$("#code-in")?.focus(), 50);
+}
+function startDemo(){
+  {
+    MODE = "demo";
+    let saved = null; try{ saved = JSON.parse(ls.get("envol-demo") || "null"); }catch(e){}
+    Object.assign(D, saved || demoSeed());
+    COLS.forEach(c => { D[c] = D[c] || []; loaded.add(c); });
+    if(!saved) saveDemo();
+    render();
+  }
+}
+function demoSeed(){
+  const t = parseD(todayStr());
+  const add = n => { const d = new Date(t); d.setDate(d.getDate()+n); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); };
+  const wd = t.getDay(), toWed = (3-wd+7)%7;
+  return {
+    profiles:[],
+    matches:[
+      {id:"ex1",adversaire:"Équipe exemple A",date:add(3),heure:"14:00",rdv:"13:15",lieu:"Gymnase municipal",domicile:true,presence:{},convoques:{},cars:{},ts:1},
+      {id:"ex2",adversaire:"Équipe exemple B",date:add(10),heure:"16:30",rdv:"15:00",lieu:"Salle des sports (extérieur)",domicile:false,presence:{},convoques:{},cars:{},ts:2}
+    ],
+    events:[{id:"ev1",titre:"Goûter de fin de phase (exemple)",date:add(17),heure:"16:00",lieu:"Club house",description:"Chacun apporte quelque chose à partager.",covoit:false,auteur:null,participants:{},cars:{},ts:3}],
+    cycles:[{id:"cy1",titre:"Cycle exemple · Le dribble",debut:add(toWed-7),fin:add(toWed+14),
+      mercredi:{titre:"Dribble main faible",description:"Parcours de plots, dribble main gauche puis changements de main.",astuce:"Encouragez-le à dribbler sans regarder le ballon : c'est ce qu'on travaille."},
+      vendredi:{titre:"Dribble en opposition",description:"1 contre 1 sur demi-terrain, protéger son ballon.",astuce:"S'il perd le ballon en essayant, c'est normal et positif : il prend des risques."},ts:4}],
+    messages:[],
+    photos:[]
+  };
+}
+
+/* ---------- profils ---------- */
+const meId = () => ls.get("envol-me");
+const me = () => D.profiles.find(p => p.id === meId()) || null;
+const isCoach = () => me()?.role === "coach";
+const prof = id => D.profiles.find(p => p.id === id);
+const fullName = p => p ? (p.prenom+" "+p.nom).trim() : "Profil supprimé";
+const ICONS = {
+  ballon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2v20M5 5c3 3 3 11 0 14M19 5c-3 3-3 11 0 14"/></svg>',
+  etoile:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.7 7-6.3-3.8-6.3 3.8 1.7-7L2 9.2l7.1-.6z"/></svg>',
+  eclair:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>',
+  couronne:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7l4.5 4L12 4l4.5 7L21 7l-2 12H5z"/></svg>',
+  flamme:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4 6 6 6 12a6 6 0 01-12 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4-1-6 1-9z"/></svg>',
+  aile:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 20C6 10 13 5 22 3c-2 3-4 5-7 6 2 0 4 0 5-1-2 3-5 5-9 5 2 1 4 1 6 0-3 4-8 6-15 7z"/></svg>'
+};
+const COLORS = ["#e8b52a","#d6c38c","#8a7a4c","#e0d6bd","#c98b5b","#7d8f6a"];
+function avatar(p, size=36){
+  const st = `width:${size}px;height:${size}px;font-size:${Math.round(size*.42)}px`;
+  if(!p) return `<span class="av" style="${st}">?</span>`;
+  if(p.photo) return `<span class="av" style="${st}"><img alt="" src="${esc(p.photo)}"></span>`;
+  const a = p.avatar || {};
+  const bg = esc(a.color || COLORS[0]);
+  const inner = a.icon && ICONS[a.icon] ? ICONS[a.icon] : esc(((p.prenom||"?")[0]+(p.nom||"")[0]||"").toUpperCase());
+  return `<span class="av" style="${st};background:${bg}">${inner}</span>`;
+}
+const roleLabel = p => p?.role === "coach" ? "Coach" : "Joueur";
+
+/* ---------- rendu ---------- */
+const TABS = [["home","Accueil"],["matchs","Matchs"],["effectif","Effectif"],["photos","Photos"],["events","Événements"],["train","Entraînements"],["messages","Messages"],["rules","Règles"]];
+const tabOf = v => ({match:"matchs",event:"events",cycle:"train",rules13:"rules"}[v] || v);
+function go(view, id=null){ S.view = view; S.id = id; S.menu = null; render(); window.scrollTo(0,0); }
+
+function render(){
+  const app = $("#app");
+  if(MODE === "loading" || !loaded.has("profiles")) return;
+  if(!me()){ app.innerHTML = renderWelcome(); return; }
+  const m = me();
+  let body = "";
+  try{
+    body = ({home:vHome,matchs:vMatchs,match:vMatch,effectif:vEffectif,photos:vPhotos,events:vEvents,event:vEvent,train:vTrain,cycle:vCycle,messages:vMessages,rules:vRules,rules13:vRules13}[S.view] || vHome)();
+  }catch(e){ console.error(e); body = `<div class="empty">Cette page n'est plus disponible.<button class="btn" data-go="home">Retour à l'accueil</button></div>`; }
+  app.innerHTML = `
+  <header class="top"><div class="wrap">
+    <div class="bar">
+      <button class="me" data-act="profile-sheet" aria-label="Mon profil">
+        ${avatar(m,34)}
+        <span style="min-width:0"><span class="me-name" style="display:block">${esc(fullName(m))}</span><span class="me-role">${roleLabel(m)}${m.role!=="coach"&&m.numero?" · n°"+esc(m.numero):""}</span></span>
+      </button>
+      <button class="brand" data-go="home" aria-label="Accueil"><img alt="EN.V.O.L" src="${MARK}"></button>
+    </div>
+    <nav class="tabs" aria-label="Onglets">
+      ${TABS.map(([k,l]) => `<button class="tab" data-go="${k}" ${tabOf(S.view)===k?'aria-current="page"':""}>${l}</button>`).join("")}
+    </nav>
+  </div></header>
+  <main class="wrap">${MODE==="demo" ? `<div class="banner">Mode démo : Firebase n'est pas encore configuré, les données restent sur ce téléphone.</div>` : ""}${body}</main>`;
+  const at = app.querySelector(".tab[aria-current]"); if(at){ const n = at.parentElement; n.scrollLeft = at.offsetLeft - (n.clientWidth - at.offsetWidth)/2; }
+}
+
+/* ---------- accueil / profil ---------- */
+function renderWelcome(){
+  const list = D.profiles.slice().sort((a,b)=>fullName(a).localeCompare(fullName(b)));
+  return `<main class="wrap" style="padding-block:28px 48px">
+    <div class="hero-logo"><img alt="EN.V.O.L PLC/ESG" src="${LOGO}" style="width:170px"></div>
+    <h1 class="h1" style="text-align:center">Bienvenue dans l'équipe</h1>
+    <p class="muted" style="text-align:center;margin:0">Choisis ton profil s'il existe déjà, sinon crée-le. Ce téléphone s'en souviendra.</p>
+    ${list.length ? `<div class="h2">Déjà inscrits</div><div class="list">${list.map(p => `
+      <button class="line" data-act="pick-me" data-id="${p.id}">${avatar(p,40)}<span class="grow"><span class="t" style="display:block">${esc(fullName(p))}</span><span class="small muted">${roleLabel(p)}</span></span><span class="chev">C'est moi ›</span></button>`).join("")}</div>` : ""}
+    <button class="btn gold block" data-act="profile-form">Créer mon profil</button>
+  </main>`;
+}
+
+function matchFacts(m){
+  return `<div class="facts">
+    <div class="fact"><span>Match</span><b>${esc(m.heure||"—")}</b></div>
+    <div class="fact"><span>RDV</span><b>${esc(m.rdv||"—")}</b></div>
+    <div class="fact"><span>Date</span><b>${esc(fmtDate(m.date))}</b></div>
+    <div class="fact wide"><span>Lieu</span><b>${esc(m.lieu||"À préciser")}</b></div>
+  </div>`;
+}
+const homeChip = m => m.domicile ? `<span class="chip home">Domicile</span>` : `<span class="chip away">Extérieur</span>`;
+function nextMatchCard(m){
+  if(!m) return `<div class="card"><span class="label">Prochain match</span><div class="empty" style="border:0;padding:6px">Aucun match à venir.${isCoach()?`<button class="btn" data-act="match-form">Ajouter un match</button>`:""}</div></div>`;
+  const cd = countdown(m.date);
+  const np = on(m.presence).length, fs = carSeatsFree(m);
+  return `<button class="sb" data-go="match" data-id="${m.id}" aria-label="Prochain match contre ${esc(m.adversaire)}">
+    ${sbBody(m, "Prochain match", "")}
+    <span class="sb-foot"><span><b>${np}</b> présent${np>1?"s":""}</span><span><b>${fs}</b> place${fs>1?"s":""} en covoiturage ›</span></span>
+  </button>`;
+}
+function sbBody(m, title, extra){
+  const cd = countdown(m.date);
+  const d = parseD(m.date);
+  const dateTxt = d ? JOURS[d.getDay()].replace(/^./, c => c.toUpperCase())+" "+d.getDate()+" "+MOIS[d.getMonth()] : "";
+  return `<span class="sb-top"><span class="label">${title}</span><span class="row" style="gap:4px"><span class="chip">${esc(dateTxt)}${cd?" · "+cd:""}</span>${extra}</span></span>
+    <span class="sb-board">
+      <span class="sb-team"><img alt="" src="${MARK}"><b>EN.V.O.L</b></span>
+      <span class="sb-clock"><span>Match</span><span class="sb-time">${esc(m.heure||"--:--")}</span><span class="sb-where ${m.domicile?"home":""}">${m.domicile?"Domicile":"Extérieur"}</span></span>
+      <span class="sb-team"><span class="sb-badge">${esc(initials(m.adversaire))}</span><b>${esc(m.adversaire)}</b></span>
+    </span>
+    <span class="sb-strip"><span><span class="k">RDV</span><b class="num">${esc(m.rdv||"—")}</b></span><span class="wide"><span class="k">Lieu</span><b class="txt">${esc(m.lieu||"À préciser")}</b></span></span>`;
+}
+function initials(name){
+  const stop = new Set(["de","du","des","la","le","les","et","d","l","au","aux"]);
+  const w = String(name||"").replace(/['’]/g," ").split(/[\s\-_/.]+/).filter(x => x && !stop.has(x.toLowerCase()));
+  if(!w.length) return "?";
+  if(w.length === 1) return w[0].slice(0,2).toUpperCase();
+  return w.slice(0,3).map(x => x[0]).join("").toUpperCase();
+}
+function carSeatsFree(m){ return Object.values(m.cars||{}).filter(Boolean).reduce((n,c)=>n+Math.max(0,(c.seats||0)-on(c.passengers).length),0); }
+const upcoming = () => D.matches.filter(m => m.date >= todayStr()).sort((a,b)=>(a.date+a.heure).localeCompare(b.date+b.heure));
+function currentCycle(){
+  const t = todayStr();
+  const cs = D.cycles.slice().sort((a,b)=>(b.debut||"").localeCompare(a.debut||""));
+  return cs.find(c => c.debut<=t && c.fin>=t) || cs.find(c => c.debut<=t) || cs[cs.length-1] || null;
+}
+const sortedMsgs = () => D.messages.slice().sort((a,b)=>b.ts-a.ts);
+const sortedPhotos = () => D.photos.slice().sort((a,b)=>b.ts-a.ts);
+
+function vHome(){
+  const m = upcoming()[0];
+  const msgs = sortedMsgs().slice(0,2);
+  const cy = currentCycle();
+  const ph = sortedPhotos()[0];
+  return `
+  ${nextMatchCard(m)}
+  <button class="card" data-go="messages">
+    <div class="card-head"><span class="label">Messages</span><span class="chev">Tout voir ›</span></div>
+    ${msgs.length ? msgs.map(x => { const a = prof(x.auteur); return `<div class="mini-msg">${avatar(a,30)}<div style="min-width:0;flex:1"><div class="small"><b>${esc(fullName(a))}</b> <span class="muted">· ${ago(x.ts)}</span></div><p>${esc(x.texte)}</p></div></div>`; }).join("") : `<span class="muted small">Pas encore de message. Lance la conversation !</span>`}
+  </button>
+  <button class="card" ${cy?`data-go="cycle" data-id="${cy.id}"`:`data-go="train"`}>
+    <div class="card-head"><span class="label">Entraînement</span><span class="chev">Le cycle ›</span></div>
+    ${cy ? `<div class="vs" style="font-size:24px">${esc(cy.titre)}</div>
+      <div class="list" style="gap:6px">
+        <div class="row small"><span class="chip">Mer.</span><span style="min-width:0">${esc(cy.mercredi?.titre||"—")}</span></div>
+        <div class="row small"><span class="chip">Ven.</span><span style="min-width:0">${esc(cy.vendredi?.titre||"—")}</span></div>
+      </div>` : `<span class="muted small">Aucun cycle pour l'instant.</span>`}
+  </button>
+  <button class="card" data-go="photos">
+    <div class="card-head"><span class="label">Photos</span><span class="chev">L'album ›</span></div>
+    ${ph ? `<img class="last-photo" alt="Dernière photo" src="${esc(ph.data)}"><span class="small muted">Ajoutée par ${esc(fullName(prof(ph.auteur)))} · ${ago(ph.ts)}</span>` : `<span class="muted small">L'album est vide. Ajoute la première photo !</span>`}
+  </button>`;
+}
+
+/* ---------- matchs ---------- */
+function vMatchs(){
+  const up = upcoming(); const [next, ...rest] = up;
+  const past = D.matches.filter(m => m.date < todayStr()).sort((a,b)=>b.date.localeCompare(a.date));
+  return `<div class="row between"><h1 class="h1">Matchs</h1></div>
+  ${nextMatchCard(next)}
+  ${isCoach()?`<button class="add" data-act="match-form">+ Ajouter un match</button>`:""}
+  ${rest.length?`<div class="h2">À venir</div><div class="list">${rest.map(matchLine).join("")}</div>`:""}
+  ${past.length?`<div class="h2">Passés</div><div class="list" style="opacity:.7">${past.map(matchLine).join("")}</div>`:""}`;
+}
+function matchLine(m){
+  const d = parseD(m.date);
+  return `<button class="line" data-go="match" data-id="${m.id}">
+    <span class="date-block"><b>${d?d.getDate():"—"}</b><span>${d?MOIS[d.getMonth()]:""}</span></span>
+    <span class="grow"><span class="t" style="display:block">vs ${esc(m.adversaire)}</span><span class="small muted num">${esc(m.heure||"")} · RDV ${esc(m.rdv||"—")} · ${esc(m.lieu||"")}</span></span>
+    ${homeChip(m)}
+  </button>`;
+}
+function kebab(key, items){
+  if(!items.length) return "";
+  return `<div class="menu-wrap"><button class="icon-btn" data-act="menu" data-key="${key}" aria-label="Options" aria-expanded="${S.menu===key}">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+    ${S.menu===key?`<div class="menu">${items.map(([act,label,id,cls]) => `<button data-act="${act}" data-id="${id}" class="${cls||""}">${label}</button>`).join("")}</div>`:""}</div>`;
+}
+function vMatch(){
+  const m = D.matches.find(x => x.id === S.id);
+  if(!m) return `<div class="empty">Ce match a été supprimé.<button class="btn" data-go="matchs">Voir les matchs</button></div>`;
+  const my = me(); const pres = !!(m.presence||{})[my.id];
+  const players = D.profiles.filter(p => p.role !== "coach");
+  const present = players.filter(p => (m.presence||{})[p.id]);
+  const noAnswer = players.filter(p => !(m.presence||{})[p.id]);
+  const conv = on(m.convoques).length;
+  return `<button class="back" data-go="matchs">‹ Matchs</button>
+  <div class="sb">${sbBody(m, m.date < todayStr() ? "Match joué" : "Match", isCoach()?kebab("m-"+m.id,[["match-edit","Modifier",m.id],["match-del","Supprimer",m.id,"del"]]):"")}</div>
+  <div class="btns">
+    ${my.role!=="coach"?`<button class="btn ${pres?"on":"gold"}" data-act="presence" data-col="matches" data-id="${m.id}">${pres?"✓ Je suis présent":"Je suis présent"}</button>`:`<span class="btn ghost small muted" style="cursor:default">Coach : valide les convocations</span>`}
+    <button class="btn" data-act="car-form" data-col="matches" data-id="${m.id}">Je peux emmener</button>
+  </div>
+  <section class="card">
+    <div class="card-head"><span class="label">Présents · ${present.length}</span><span class="small muted">${conv} convoqué${conv>1?"s":""}</span></div>
+    ${present.length ? `<div class="list">${present.map(p => { const c = !!(m.convoques||{})[p.id]; return `
+      <div class="row">${avatar(p,34)}<span style="flex:1;min-width:0"><b>${esc(fullName(p))}</b>${c?` <span class="chip ok">Convoqué</span>`:""}</span>
+      <button class="check ${c?"on":""}" ${isCoach()?`data-act="convoc" data-id="${m.id}" data-p="${p.id}" aria-label="Valider la convocation de ${esc(fullName(p))}"`:`disabled aria-label="${c?"Convocation confirmée":"En attente du coach"}"`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5 9-10"/></svg></button></div>`; }).join("")}</div>` : `<span class="muted small">Personne n'a encore confirmé.</span>`}
+    ${noAnswer.length ? `<details><summary class="small muted" style="cursor:pointer">Sans réponse (${noAnswer.length})</summary><div class="small muted" style="margin-top:6px">${noAnswer.map(p=>esc(fullName(p))).join(", ")}</div></details>` : ""}
+  </section>
+  ${carpool(m,"matches")}`;
+}
+
+/* ---------- covoiturage (matchs + événements) ---------- */
+function carpool(doc, col){
+  const cars = Object.entries(doc.cars||{}).filter(([,c]) => c);
+  const my = me();
+  return `<section class="card">
+    <div class="card-head"><span class="label">Covoiturage</span><span class="small muted">${carSeatsFree(doc)} place${carSeatsFree(doc)>1?"s":""} libre${carSeatsFree(doc)>1?"s":""}</span></div>
+    ${cars.length ? cars.map(([cid,c]) => {
+      const owner = prof(c.owner); const pax = on(c.passengers).sort((a,b)=>(c.passengers[a]||0)-(c.passengers[b]||0));
+      const mine = c.owner === my.id; const already = on(c.passengers).includes(my.id);
+      const seats = [];
+      for(let i=0;i<(c.seats||0);i++){
+        const pid = pax[i];
+        if(pid){ const p = prof(pid); const canX = mine || pid === my.id;
+          seats.push(`<div class="seat">${avatar(p,28)}<span class="grow">${esc(fullName(p))}</span>${canX?`<button class="x" data-act="seat-leave" data-col="${col}" data-id="${doc.id}" data-car="${cid}" data-p="${pid}" aria-label="Retirer ${esc(fullName(p))}">✕</button>`:""}</div>`);
+        } else seats.push(already || mine ? `<div class="seat free" style="color:var(--muted)">Place libre</div>` : `<button class="seat free" data-act="seat-take" data-col="${col}" data-id="${doc.id}" data-car="${cid}">+ M'inscrire</button>`);
+      }
+      return `<div class="car">
+        <div class="row">${avatar(owner,36)}<span style="flex:1;min-width:0"><b>${esc(c.driver||fullName(owner))}</b><span class="small muted" style="display:block">${owner && owner.role!=="coach" && c.driver!==fullName(owner)?"avec "+esc(fullName(owner))+" · ":""}${c.seats} place${c.seats>1?"s":""}</span></span>
+        ${mine?`<button class="x" data-act="car-del" data-col="${col}" data-id="${doc.id}" data-car="${cid}" aria-label="Retirer ma voiture">✕</button>`:""}</div>
+        <div class="seats">${seats.join("")}</div></div>`;
+    }).join("") : `<span class="muted small">Pas encore de voiture proposée. Appuie sur « Je peux emmener ».</span>`}
+  </section>`;
+}
+
+/* ---------- effectif ---------- */
+function vEffectif(){
+  const coachs = D.profiles.filter(p => p.role === "coach").sort((a,b)=>fullName(a).localeCompare(fullName(b)));
+  const joueurs = D.profiles.filter(p => p.role !== "coach").sort((a,b)=>(Number(a.numero)||999)-(Number(b.numero)||999) || fullName(a).localeCompare(fullName(b)));
+  const row = p => `<div class="line">
+    ${p.role!=="coach"?`<span class="jersey">${esc(p.numero||"")}</span>`:""}
+    ${avatar(p,40)}
+    <span class="grow"><span class="t" style="display:block">${esc(fullName(p))}</span>
+      <span class="small muted" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.role==="coach"?"Coach":(p.parents||[]).filter(x=>x&&x.prenom).map(x=>esc(x.prenom+" "+x.nom)).join(" · ")||"Joueur"}</span></span>
+    ${isCoach() ? (p.licence ? `<button class="licence set" data-act="licence" data-id="${p.id}">Lic. ${esc(p.licence)} ✎</button>` : `<button class="licence-btn" data-act="licence" data-id="${p.id}">+ Licence</button>`)
+      : `<span class="licence ${p.licence?"set":""}">${p.licence?"Lic. "+esc(p.licence):"Licence —"}</span>`}
+    ${isCoach() && p.id !== meId() ? `<button class="del-p" data-act="profile-del" data-id="${p.id}" aria-label="Supprimer le profil de ${esc(fullName(p))}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>` : ""}
+  </div>`;
+  return `<h1 class="h1">Effectif</h1>
+  <div class="h2">Coachs · ${coachs.length}</div>
+  <div class="list">${coachs.map(row).join("") || `<span class="muted small">Aucun coach inscrit.</span>`}</div>
+  <div class="h2">Joueurs · ${joueurs.length}</div>
+  <div class="list">${joueurs.map(row).join("") || `<span class="muted small">Aucun joueur inscrit pour l'instant.</span>`}</div>`;
+}
+
+/* ---------- photos ---------- */
+function vPhotos(){
+  const ps = sortedPhotos();
+  return `<h1 class="h1">Photos</h1>
+  <button class="add" data-act="pick-photos">+ Ajouter des photos</button>
+  ${ps.length ? `<div class="grid">${ps.map(p => `<button data-act="photo-view" data-id="${p.id}" aria-label="Voir la photo"><img alt="" loading="lazy" src="${esc(p.data)}"></button>`).join("")}</div>` : `<div class="empty">L'album est vide. Les photos ajoutées par l'équipe apparaîtront ici.</div>`}`;
+}
+
+/* ---------- événements ---------- */
+function vEvents(){
+  const t = todayStr();
+  const up = D.events.filter(e => e.date >= t).sort((a,b)=>(a.date+(a.heure||"")).localeCompare(b.date+(b.heure||"")));
+  const past = D.events.filter(e => e.date < t).sort((a,b)=>b.date.localeCompare(a.date));
+  const line = e => { const d = parseD(e.date); return `<button class="line" data-go="event" data-id="${e.id}">
+    <span class="date-block"><b>${d?d.getDate():"—"}</b><span>${d?MOIS[d.getMonth()]:""}</span></span>
+    <span class="grow"><span class="t" style="display:block">${esc(e.titre)}</span><span class="small muted">${esc(e.heure||"")}${e.lieu?" · "+esc(e.lieu):""} · ${on(e.participants).length} participant${on(e.participants).length>1?"s":""}</span></span>
+    ${e.covoit?`<span class="chip">Covoit.</span>`:""}</button>`; };
+  return `<h1 class="h1">Événements</h1>
+  <button class="add" data-act="event-form">+ Ajouter un événement</button>
+  ${up.length?`<div class="list">${up.map(line).join("")}</div>`:`<div class="empty">Aucun événement à venir.</div>`}
+  ${past.length?`<div class="h2">Passés</div><div class="list" style="opacity:.7">${past.map(line).join("")}</div>`:""}`;
+}
+function vEvent(){
+  const e = D.events.find(x => x.id === S.id);
+  if(!e) return `<div class="empty">Cet événement a été supprimé.<button class="btn" data-go="events">Voir les événements</button></div>`;
+  const my = me(); const mineOrCoach = e.auteur === my.id || isCoach();
+  const part = on(e.participants).map(prof).filter(Boolean);
+  const inn = !!(e.participants||{})[my.id];
+  return `<button class="back" data-go="events">‹ Événements</button>
+  <div class="card next">
+    <div class="card-head"><span class="label">${esc(fmtDate(e.date,true))}${e.heure?" · "+esc(e.heure):""}</span>${mineOrCoach?kebab("e-"+e.id,[["event-edit","Modifier",e.id],["event-del","Supprimer",e.id,"del"]]):""}</div>
+    <div class="vs" style="font-size:28px">${esc(e.titre)}</div>
+    ${e.lieu?`<div class="fact wide"><span>Lieu</span><b>${esc(e.lieu)}</b></div>`:""}
+    ${e.description?`<p style="margin:0;white-space:pre-wrap;overflow-wrap:anywhere">${esc(e.description)}</p>`:""}
+    <span class="small muted">Créé par ${esc(fullName(prof(e.auteur)))}</span>
+  </div>
+  <div class="btns" ${e.covoit?"":'style="grid-template-columns:1fr"'}>
+    <button class="btn ${inn?"on":"gold"}" data-act="presence" data-col="events" data-id="${e.id}">${inn?"✓ Je participe":"Je participe"}</button>
+    ${e.covoit?`<button class="btn" data-act="car-form" data-col="events" data-id="${e.id}">Je peux emmener</button>`:""}
+  </div>
+  <section class="card"><span class="label">Participants · ${part.length}</span>
+    ${part.length?`<div class="list">${part.map(p=>`<div class="row">${avatar(p,32)}<b style="min-width:0">${esc(fullName(p))}</b><span class="small muted">${roleLabel(p)}</span></div>`).join("")}</div>`:`<span class="muted small">Pas encore d'inscrit.</span>`}
+  </section>
+  ${e.covoit?carpool(e,"events"):""}`;
+}
+
+/* ---------- entraînements ---------- */
+function vTrain(){
+  const cur = currentCycle(); const t = todayStr();
+  const others = D.cycles.filter(c => c !== cur).sort((a,b)=>(b.debut||"").localeCompare(a.debut||""));
+  const futur = others.filter(c => c.debut > t), past = others.filter(c => c.debut <= t);
+  const line = c => `<button class="line" data-go="cycle" data-id="${c.id}"><span class="grow"><span class="t" style="display:block">${esc(c.titre)}</span><span class="small muted num">${esc(fmtDate(c.debut))} → ${esc(fmtDate(c.fin))}</span></span><span class="chev">›</span></button>`;
+  return `<h1 class="h1">Entraînements</h1>
+  ${cur ? `<button class="card next" data-go="cycle" data-id="${cur.id}">
+      <div class="card-head"><span class="label">Cycle en cours</span><span class="chip num">${esc(fmtDate(cur.debut))} → ${esc(fmtDate(cur.fin))}</span></div>
+      <div class="vs" style="font-size:28px">${esc(cur.titre)}</div>
+      <div class="list" style="gap:6px"><div class="row small"><span class="day" style="font-size:12px">Mercredi</span><span style="min-width:0">${esc(cur.mercredi?.titre||"—")}</span></div>
+      <div class="row small"><span class="day" style="font-size:12px">Vendredi</span><span style="min-width:0">${esc(cur.vendredi?.titre||"—")}</span></div></div>
+      <span class="small muted">Voir le contenu et l'astuce tribune ›</span></button>`
+    : `<div class="empty">Aucun cycle pour l'instant.</div>`}
+  ${isCoach()?`<button class="add" data-act="cycle-form">+ Ajouter un cycle</button>`:""}
+  ${futur.length?`<div class="h2">À venir</div><div class="list">${futur.map(line).join("")}</div>`:""}
+  ${past.length?`<div class="h2">Cycles passés</div><div class="list">${past.map(line).join("")}</div>`:""}`;
+}
+function vCycle(){
+  const c = D.cycles.find(x => x.id === S.id);
+  if(!c) return `<div class="empty">Ce cycle a été supprimé.<button class="btn" data-go="train">Voir les entraînements</button></div>`;
+  const sess = (k,l) => { const s = c[k]||{}; return `<section class="card session"><span class="day">${l}</span>
+    <h3>${esc(s.titre||"—")}</h3>${s.description?`<p class="muted">${esc(s.description)}</p>`:""}
+    ${s.astuce?`<div class="tip"><span class="label">Astuce tribune</span><p>${esc(s.astuce)}</p></div>`:""}</section>`; };
+  return `<button class="back" data-go="train">‹ Entraînements</button>
+  <div class="row between" style="align-items:flex-start"><div style="min-width:0"><h1 class="h1">${esc(c.titre)}</h1><div class="small muted num" style="margin-top:6px">${esc(fmtDate(c.debut,true))} → ${esc(fmtDate(c.fin,true))}</div></div>
+  ${isCoach()?kebab("c-"+c.id,[["cycle-edit","Modifier",c.id],["cycle-del","Supprimer",c.id,"del"]]):""}</div>
+  ${sess("mercredi","Mercredi")}${sess("vendredi","Vendredi")}`;
+}
+
+/* ---------- règles ---------- */
+const RICO = {
+  violation:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11a5 5 0 0 0 5 5h3l7 4V6l-7 4H8"/><circle cx="7" cy="11" r="2"/></svg>',
+  faute:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-4 0v5M14 10V4a2 2 0 0 0-4 0v6M10 10.5V6a2 2 0 0 0-4 0v8a8 8 0 0 0 16 0v-3a2 2 0 0 0-4 0"/></svg>',
+  temps:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2h4"/></svg>',
+  ballon:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M6 5.5c2.5 3 2.5 10 0 13M18 5.5c-2.5 3-2.5 10 0 13"/></svg>'
+};
+const W = (t) => `<div class="whistle"><b>Arbitre</b><span>${t}</span></div>`;
+const NUMS = (arr) => `<div class="key-nums">${arr.map(([b,s])=>`<div><b>${b}</b><span>${s}</span></div>`).join("")}</div>`;
+const COURT = `<svg class="court" viewBox="0 0 340 200" role="img" aria-label="Schéma du terrain : 28 mètres sur 15, panier à 2,60 mètres">
+  <g fill="none" stroke="var(--gold)" stroke-width="1.6">
+    <rect x="20" y="20" width="300" height="150" rx="2"/>
+    <line x1="170" y1="20" x2="170" y2="170"/>
+    <circle cx="170" cy="95" r="18"/>
+    <rect x="20" y="70" width="58" height="50"/><rect x="262" y="70" width="58" height="50"/>
+    <path d="M78 77a18 18 0 0 1 0 36M262 77a18 18 0 0 0 0 36"/>
+  </g>
+  <g fill="var(--gold-hi)"><circle cx="32" cy="95" r="4"/><circle cx="308" cy="95" r="4"/></g>
+  <g fill="var(--muted)" font-family="Barlow, system-ui, sans-serif" font-size="12" text-anchor="middle">
+    <text x="170" y="190">28 m</text>
+    <text x="8" y="99" transform="rotate(-90 8 95)">15 m</text>
+    <text x="49" y="64">raquette</text>
+    <text x="104" y="99">ligne LF</text>
+  </g>
+</svg>`;
+
+const RULES_MINI = [
+ {i:"violation", t:"Le marcher", s:"Faire trop de pas avec le ballon en main",
+  b:`<p>Quand un joueur tient le ballon dans ses mains (sans dribbler), il n'a pas le droit de se déplacer en marchant ou en courant.</p>
+  <p><b>Le pied de pivot :</b> le joueur à l'arrêt choisit un pied qui reste « collé » au sol, comme la pointe d'un compas. Il peut tourner autour de ce pied et bouger l'autre autant qu'il veut. S'il soulève ou fait glisser le pied de pivot avant de passer, tirer ou commencer à dribbler, c'est un marcher.</p>
+  <p>En courant, il a droit à 2 appuis après avoir attrapé le ballon (c'est le « double pas » pour aller au panier).</p>
+  ${W("fait tourner ses poings l'un autour de l'autre. Le ballon est rendu à l'autre équipe.")}`},
+ {i:"violation", t:"La reprise de dribble", s:"Dribbler, s'arrêter, puis redribbler",
+  b:`<p>Un joueur dribble (il fait rebondir le ballon). S'il attrape le ballon à deux mains ou s'arrête de dribbler, il doit ensuite <b>passer ou tirer</b>. Il n'a plus le droit de recommencer à dribbler.</p>
+  <p>Dribbler avec les deux mains en même temps est aussi une faute de dribble.</p>
+  ${W("fait un geste de tapotement avec les deux mains. Ballon à l'autre équipe.")}`},
+ {i:"violation", t:"La sortie de balle", s:"Le ballon ou le joueur touche la ligne",
+  b:`<p>Les lignes qui entourent le terrain sont <b>dehors</b>. Le ballon sort s'il touche la ligne, le sol au-delà, ou un joueur qui a un pied sur ou derrière la ligne.</p>
+  <p>C'est le dernier joueur à avoir touché le ballon qui le fait sortir. L'autre équipe fait la remise en jeu depuis la touche, à l'endroit de la sortie.</p>
+  ${W("montre avec le bras la direction de l'équipe qui récupère le ballon.")}`},
+ {i:"violation", t:"Ballon tenu", s:"Deux joueurs tiennent le ballon en même temps",
+  b:`<p>Quand un joueur de chaque équipe a les mains bien posées sur le ballon et qu'aucun ne peut le récupérer sans brutalité, l'arbitre siffle « ballon tenu ».</p>
+  <p>Pour éviter les bagarres pour le ballon, on ne se le dispute pas : il est donné <b>chacun son tour</b> à une équipe puis à l'autre. Une flèche sur la table de marque indique à qui c'est le tour (on appelle ça la possession alternée).</p>
+  ${W("lève les deux pouces vers le haut, puis montre la flèche.")}`},
+ {i:"violation", t:"L'entre-deux", s:"Le joueur qui saute n'a pas le droit d'attraper le ballon",
+  b:`<p>Au début du match, l'arbitre lance le ballon en l'air entre deux joueurs, un de chaque équipe, au rond central.</p>
+  <p>Les deux sauteurs doivent <b>taper</b> le ballon vers un coéquipier. Ils n'ont pas le droit de l'attraper eux-mêmes tant qu'il n'a pas touché un autre joueur ou le sol. S'ils l'attrapent, c'est une violation : ballon à l'autre équipe.</p>`},
+ {i:"faute", t:"La faute sur tir", s:"Contact sur un joueur qui tire + lancers francs",
+  b:`<p>Un défenseur touche irrégulièrement (bras, main, corps) un joueur pendant qu'il tire au panier.</p>
+  <ul><li><b>Le tir rentre :</b> le panier compte et le tireur obtient <b>1 lancer franc</b> en plus.</li>
+  <li><b>Le tir ne rentre pas :</b> le tireur obtient <b>2 lancers francs</b>.</li></ul>
+  <p><b>Le lancer franc :</b> le joueur tire seul, sans défenseur, derrière la ligne des lancers francs. Les autres joueurs attendent sur les côtés de la raquette. Chaque lancer réussi vaut 1 point.</p>
+  ${W("lève le bras, poing fermé, puis indique avec les doigts le nombre de lancers francs.")}`},
+ {i:"faute", t:"La faute sur le porteur", s:"Contact sur le joueur qui a le ballon",
+  b:`<p>Le défenseur doit essayer de prendre le ballon <b>sans toucher le joueur</b> : pas le droit de pousser, tenir, accrocher le bras ou taper sur les mains. On défend avec les pieds et en restant devant son adversaire.</p>
+  <p>Si le joueur n'était pas en train de tirer, l'équipe attaquante garde le ballon et fait une remise en jeu (pas de lancer franc en mini-basket, sauf faute sur tir).</p>
+  ${W("lève le poing fermé, puis montre le geste de la faute (pousser, tenir…).")}`},
+ {i:"faute", t:"La faute sur un non-porteur", s:"Contact sur un joueur qui n'a pas le ballon",
+  b:`<p>On ne doit pas non plus pousser, tenir ou bloquer avec les bras un joueur qui court sans le ballon (par exemple pour l'empêcher de recevoir une passe ou de prendre un rebond).</p>
+  <p>Ça compte comme une faute personnelle pour celui qui la commet. Le ballon va à l'équipe du joueur qui a subi la faute.</p>`},
+ {i:"faute", t:"Combien de fautes par joueur", s:"À 5 fautes, le joueur sort du match",
+  b:`<p>Chaque faute est notée à côté du nom du joueur sur la feuille de match.</p>
+  ${NUMS([["5 fautes","= sortie définitive du match"]])}
+  <p>À sa 5e faute, le joueur ne peut plus rejouer de tout le match : un coéquipier le remplace. Ce n'est pas une punition, c'est la règle : il faut apprendre à défendre sans contact.</p>`},
+ {i:"temps", t:"Le temps de jeu", s:"6 périodes de 4 minutes",
+  b:`${NUMS([["6 × 4 min","périodes de jeu"],["1 min","entre les périodes"],["5 min","mi-temps (après la 3e)"]])}
+  <p>Le chronomètre <b>s'arrête à chaque coup de sifflet</b> de l'arbitre (sortie, faute, violation) et repart quand le ballon est remis en jeu. Une période de 4 minutes dure donc plus longtemps en vrai.</p>
+  <p>Il y a 1 minute de pause entre les périodes, et une mi-temps de 5 minutes entre la 3e et la 4e période.</p>`},
+ {i:"temps", t:"Le score", s:"2 points le panier, 1 point le lancer franc",
+  b:`${NUMS([["2 pts","panier marqué en jeu"],["1 pt","lancer franc réussi"]])}
+  <p>En mini-basket, il n'y a pas de tir à 3 points : un panier vaut toujours 2 points, même de loin.</p>`},
+ {i:"ballon", t:"Panier, terrain et ballon", s:"Adaptés à la taille des enfants",
+  b:`${NUMS([["2,60 m","hauteur du panier (3,05 m chez les grands)"],["Taille 5","ballon (environ 70 cm de tour)"],["28 × 15 m","terrain (parfois réduit)"]])}
+  ${COURT}
+  <p>Le panier est plus bas et le ballon plus petit que chez les adultes pour que les enfants puissent tirer avec un bon geste. Le terrain est souvent celui des grands, parfois réduit selon les compétitions.</p>`}
+];
+
+const RULES_U13 = [
+ {i:"temps", n:"3s", t:"Les 3 secondes", s:"Pas plus de 3 secondes dans la raquette adverse",
+  b:`<p>La raquette est le rectangle peint sous le panier. Un attaquant n'a pas le droit d'y rester <b>plus de 3 secondes</b> d'affilée quand son équipe a le ballon. Il doit en sortir (les deux pieds) puis il peut y revenir.</p>
+  <p>Le but : éviter qu'un grand joueur reste planté sous le panier.</p>
+  ${W("montre 3 doigts. Ballon à l'autre équipe.")}`},
+ {i:"temps", n:"5s", t:"Les 5 secondes", s:"Joueur serré de près et remise en jeu",
+  b:`<ul><li>Un joueur qui tient le ballon <b>serré de près</b> par un défenseur (à moins d'un mètre) doit passer, tirer ou dribbler dans les 5 secondes.</li>
+  <li>Lors d'une <b>remise en jeu</b>, le joueur a 5 secondes pour lâcher le ballon.</li></ul>
+  ${W("compte les secondes avec le bras. Ballon à l'autre équipe.")}`},
+ {i:"temps", n:"8s", t:"Les 8 secondes", s:"Passer le milieu de terrain",
+  b:`<p>Quand une équipe récupère le ballon dans sa moitié de terrain (côté de son propre panier), elle a <b>8 secondes</b> pour l'amener dans la moitié adverse.</p>
+  ${W("montre 8 doigts. Ballon à l'autre équipe.")}`},
+ {i:"temps", n:"24", t:"Les 24 secondes", s:"Tirer dans le temps",
+  b:`<p>Une équipe qui a le ballon a <b>24 secondes</b> pour tirer. Le tir doit toucher l'anneau (le cercle du panier) avant la fin du compte. Une horloge spéciale au-dessus des paniers affiche le temps restant.</p>
+  <p>Si le tir touche l'anneau, le compte repart à zéro.</p>
+  ${W("tape sur son épaule. Ballon à l'autre équipe.")}`},
+ {i:"violation", t:"Les dribbles irréguliers", s:"Porter le ballon, double dribble",
+  b:`<ul><li><b>Reprise de dribble :</b> dribbler, s'arrêter, puis redribbler.</li>
+  <li><b>Double dribble :</b> dribbler avec les deux mains en même temps.</li>
+  <li><b>Porter le ballon :</b> mettre la main sous le ballon et l'accompagner pendant le dribble, comme si on le transportait.</li></ul>
+  ${W("ballon rendu à l'autre équipe.")}`},
+ {i:"violation", t:"Le retour en zone", s:"Pas de retour dans sa propre moitié",
+  b:`<p>Une fois que l'équipe a amené le ballon dans la moitié adverse (côté du panier qu'elle attaque), elle n'a plus le droit de le ramener dans sa propre moitié.</p>
+  <p>Exemple : une passe en arrière vers un coéquipier resté derrière la ligne médiane, c'est un retour en zone.</p>
+  ${W("agite l'index devant lui. Ballon à l'autre équipe.")}`},
+ {i:"violation", t:"Le pied", s:"Toucher le ballon volontairement avec le pied",
+  b:`<p>Au basket, on joue avec les mains. Frapper ou bloquer <b>volontairement</b> le ballon avec le pied ou la jambe est une violation.</p>
+  <p>Si le ballon touche le pied par accident, le jeu continue.</p>
+  ${W("montre son pied. Ballon à l'autre équipe.")}`},
+ {i:"faute", t:"La faute offensive", s:"C'est l'attaquant qui fait la faute",
+  b:`<p>Un attaquant fonce dans un défenseur qui était déjà bien placé devant lui, immobile, les pieds au sol : c'est un <b>passage en force</b>. La faute est pour l'attaquant.</p>
+  <p>Pas de lancer franc : le ballon est rendu à l'équipe qui défendait. Si le panier rentre, il ne compte pas.</p>
+  ${W("pose le poing fermé sur sa paume, puis montre l'autre panier.")}`},
+ {i:"faute", t:"Les fautes d'équipe", s:"À partir de la 5e faute dans un quart-temps",
+  b:`<p>Toutes les fautes des joueurs d'une équipe s'additionnent pendant un quart-temps. Un panneau sur la table de marque les affiche.</p>
+  ${NUMS([["4","fautes d'équipe sans pénalité"],["5e et +","2 lancers francs"]])}
+  <p>Dès la 5e faute d'équipe dans un même quart-temps, chaque faute (même sans tir) donne <b>2 lancers francs</b> à l'adversaire. Le compteur repart à zéro au quart-temps suivant.</p>`},
+ {i:"faute", t:"Technique, antisportive, disqualifiante", s:"Les fautes graves",
+  b:`<ul><li><b>Faute technique :</b> comportement non sportif sans contact (contester l'arbitre, insulte, simulation, retarder le jeu). Elle peut aussi être donnée au coach. Sanction : <b>1 lancer franc</b> pour l'adversaire.</li>
+  <li><b>Faute antisportive :</b> contact trop dur ou qui ne cherche pas à jouer le ballon (ex. : retenir un joueur seul qui file au panier). Sanction : lancers francs <b>et</b> ballon à l'adversaire.</li>
+  <li><b>Faute disqualifiante :</b> comportement très grave (violence, bagarre). Le joueur est exclu et doit quitter le terrain jusqu'à la fin du match.</li></ul>
+  <p>Deux fautes techniques ou deux antisportives pour un même joueur entraînent aussi son exclusion.</p>`},
+ {i:"temps", t:"Le temps de jeu", s:"4 quarts-temps",
+  b:`${NUMS([["4 × 8 min","quarts-temps (temps arrêté)"],["Prolongation","en cas d'égalité"]])}
+  <p>Le match se joue en 4 quarts-temps, avec une pause entre chacun et une mi-temps plus longue après le 2e. Comme en mini-basket, le chronomètre s'arrête à chaque coup de sifflet.</p>
+  <p>En cas d'égalité, on joue une prolongation.</p>`},
+ {i:"ballon", t:"Les changements", s:"Remplacer un joueur",
+  b:`<p>Les changements sont <b>illimités</b> : un joueur peut sortir et revenir plusieurs fois.</p>
+  <p>Le remplaçant se présente à la table de marque et attend que l'arbitre l'autorise à entrer. Le changement se fait seulement quand le jeu est arrêté (coup de sifflet, ballon mort).</p>`},
+ {i:"violation", t:"L'entre-deux", s:"Seulement au début du match",
+  b:`<p>Chez les grands, on fait un entre-deux <b>uniquement au tout début du match</b>.</p>
+  <p>Ensuite, à chaque ballon tenu, et au début des quarts-temps suivants, le ballon est donné à tour de rôle grâce à la flèche de possession alternée sur la table de marque.</p>`}
+];
+
+function ruleCard(r){
+  return `<details class="rule"><summary><span class="rule-ico" aria-hidden="true">${r.n ? esc(r.n) : RICO[r.i]}</span><span class="rule-t">${esc(r.t)}<small>${esc(r.s)}</small></span><span class="plus" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></summary><div class="rule-body">${r.b}</div></details>`;
+}
+function vRules(){
+  return `<h1 class="h1">Règles du mini-basket</h1>
+  <p class="rules-intro">Les règles expliquées simplement, pour suivre le match depuis la tribune. Appuie sur une règle pour l'ouvrir.</p>
+  <div class="list">${RULES_MINI.map(ruleCard).join("")}</div>
+  <button class="u13-btn" data-go="rules13"><span style="flex:1;min-width:0"><b>À partir de U13</b><span>Les règles en plus chez les grands : 3, 5, 8 et 24 secondes, fautes d'équipe…</span></span><span style="font-size:24px">›</span></button>`;
+}
+function vRules13(){
+  return `<button class="back" data-go="rules">‹ Règles du mini-basket</button>
+  <h1 class="h1">Règles à partir de U13</h1>
+  <p class="rules-intro">Ces règles s'ajoutent à celles du mini-basket. Selon le niveau du championnat, certaines (8 et 24 secondes) ne sont pas toujours appliquées.</p>
+  <div class="list">${RULES_U13.map(ruleCard).join("")}</div>`;
+}
+
+/* ---------- messages ---------- */
+function vMessages(){
+  const ms = sortedMsgs(); const my = me();
+  return `<h1 class="h1">Messages</h1>
+  <button class="add" data-act="msg-form">+ Écrire un message</button>
+  ${ms.length ? ms.map(x => {
+    const a = prof(x.auteur); const can = x.auteur === my.id || isCoach();
+    const cm = Object.entries(x.comments||{}).filter(([,c])=>c).sort((p,q)=>p[1].ts-q[1].ts);
+    return `<article class="post">
+      <div class="row">${avatar(a,38)}<div style="flex:1;min-width:0"><b>${esc(fullName(a))}</b><div class="small muted">${roleLabel(a)} · ${ago(x.ts)}</div></div>
+      ${can?kebab("x-"+x.id,[["msg-del","Supprimer le message",x.id,"del"]]):""}</div>
+      <p>${esc(x.texte)}</p>
+      ${x.commentsOn ? `<div class="comments">
+        ${cm.map(([cid,c]) => { const ca = prof(c.auteur); const canC = c.auteur === my.id || isCoach(); return `<div class="cmt">${avatar(ca,28)}<div class="bubble"><div class="row between small"><b>${esc(fullName(ca))}</b><span class="row" style="gap:4px"><span class="muted">${ago(c.ts)}</span>${canC?`<button class="x" data-act="cmt-del" data-id="${x.id}" data-c="${cid}" aria-label="Supprimer le commentaire">✕</button>`:""}</span></div><p style="margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere">${esc(c.texte)}</p></div></div>`; }).join("")}
+        <button class="btn ghost" data-act="cmt-form" data-id="${x.id}" style="align-self:flex-start;min-height:38px">Répondre</button></div>` : ""}
+    </article>`; }).join("") : `<div class="empty">Aucun message. Le premier message apparaîtra aussi sur l'accueil.</div>`}`;
+}
+
+/* ---------- feuilles (formulaires) ---------- */
+function sheet(html){ $("#layer").innerHTML = `<div class="sheet-bg" data-act="close-bg"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; const f = $("#layer input, #layer textarea"); if(f && f.type!=="file" && f.type!=="checkbox") setTimeout(()=>f.focus({preventScroll:true}),50); }
+function closeSheet(){ $("#layer").innerHTML = ""; }
+const val = id => ($("#"+id)?.value || "").trim();
+const sheetHead = t => `<div class="row between"><h2>${t}</h2><button class="icon-btn" data-act="close" aria-label="Fermer">✕</button></div>`;
+
+let draft = null; // profil en cours d'édition
+function profileForm(edit){
+  const p = edit ? {...me()} : {prenom:"",nom:"",role:"joueur",numero:"",parents:[{prenom:"",nom:""},{prenom:"",nom:""}],photo:null,avatar:{color:COLORS[0],icon:null}};
+  p.parents = [0,1].map(i => (p.parents||[])[i] || {prenom:"",nom:""});
+  p.avatar = p.avatar || {color:COLORS[0],icon:null};
+  draft = p; drawProfileForm(edit);
+}
+function drawProfileForm(edit){
+  const p = draft;
+  sheet(`${sheetHead(edit?"Mon profil":"Créer mon profil")}
+  <form id="pf" class="pick">
+    <div class="two"><label class="field"><span>Prénom</span><input class="input" id="pf-prenom" required value="${esc(p.prenom)}" autocomplete="given-name"></label>
+    <label class="field"><span>Nom</span><input class="input" id="pf-nom" required value="${esc(p.nom)}" autocomplete="family-name"></label></div>
+    <div class="field"><span>Je suis</span><div class="seg"><button type="button" data-act="pf-role" data-v="joueur" aria-pressed="${p.role!=="coach"}">Joueur</button><button type="button" data-act="pf-role" data-v="coach" aria-pressed="${p.role==="coach"}">Coach</button></div></div>
+    ${p.role!=="coach"?`<label class="field"><span>Numéro de maillot (facultatif)</span><input class="input" id="pf-num" inputmode="numeric" maxlength="3" value="${esc(p.numero||"")}"></label>
+    <fieldset class="fieldset"><legend>Parents (pour le covoiturage)</legend>
+      ${[0,1].map(i=>`<div class="two"><label class="field"><span>Parent ${i+1} · prénom</span><input class="input" id="pf-p${i}-prenom" value="${esc(p.parents[i].prenom)}"></label><label class="field"><span>Nom</span><input class="input" id="pf-p${i}-nom" value="${esc(p.parents[i].nom)}"></label></div>`).join("")}
+      <span class="small muted">Le parent 2 est facultatif.</span>
+    </fieldset>`:""}
+    <fieldset class="fieldset"><legend>Photo ou avatar</legend>
+      <div class="row">${avatar({...p, prenom:val("pf-prenom")||p.prenom, nom:val("pf-nom")||p.nom},64)}
+        <div class="pick" style="flex:1"><button type="button" class="btn" data-act="pick-avatar">${p.photo?"Changer la photo":"Prendre / choisir une photo"}</button>
+        ${p.photo?`<button type="button" class="btn ghost" data-act="pf-nophoto">Utiliser un avatar</button>`:""}</div></div>
+      ${!p.photo?`<span class="small muted">Couleur</span><div class="swatches">${COLORS.map(c=>`<button type="button" class="sw" style="background:${c}" data-act="pf-color" data-v="${c}" aria-pressed="${p.avatar.color===c}" aria-label="Couleur"></button>`).join("")}</div>
+      <span class="small muted">Symbole</span><div class="swatches">
+        <button type="button" class="sw" style="background:var(--surface-2);font-family:var(--display);font-weight:800" data-act="pf-icon" data-v="" aria-pressed="${!p.avatar.icon}" aria-label="Initiales">AB</button>
+        ${Object.keys(ICONS).map(k=>`<button type="button" class="sw" style="background:var(--surface-2);color:var(--gold-hi)" data-act="pf-icon" data-v="${k}" aria-pressed="${p.avatar.icon===k}" aria-label="${k}"><span style="width:22px;height:22px;display:grid">${ICONS[k]}</span></button>`).join("")}</div>`:""}
+    </fieldset>
+    <button class="btn gold block" type="submit">${edit?"Enregistrer":"C'est parti"}</button>
+  </form>`);
+  $("#pf").dataset.edit = edit ? "1" : "";
+}
+function readProfileDraft(){
+  const p = draft; if(!p) return;
+  if($("#pf-prenom")) p.prenom = val("pf-prenom");
+  if($("#pf-nom")) p.nom = val("pf-nom");
+  if($("#pf-num")) p.numero = val("pf-num");
+  [0,1].forEach(i => { if($(`#pf-p${i}-prenom`)) p.parents[i] = {prenom:val(`pf-p${i}-prenom`), nom:val(`pf-p${i}-nom`)}; });
+}
+
+function matchForm(m){
+  m = m || {adversaire:"",date:todayStr(),heure:"",rdv:"",lieu:"",domicile:true};
+  draft = {domicile: m.domicile !== false};
+  sheet(`${sheetHead(m.id?"Modifier le match":"Nouveau match")}
+  <form id="mf" class="pick" data-id="${m.id||""}">
+    <label class="field"><span>Équipe adverse</span><input class="input" id="mf-adv" required value="${esc(m.adversaire)}" placeholder="Nom de l'équipe"></label>
+    <div class="field"><span>Lieu du match</span><div class="seg"><button type="button" data-act="mf-dom" data-v="1" aria-pressed="${draft.domicile}">Domicile</button><button type="button" data-act="mf-dom" data-v="0" aria-pressed="${!draft.domicile}">Extérieur</button></div></div>
+    <label class="field"><span>Date</span><input class="input" type="date" id="mf-date" required value="${esc(m.date)}"></label>
+    <div class="two"><label class="field"><span>Heure du match</span><input class="input" type="time" id="mf-heure" required value="${esc(m.heure)}"></label>
+    <label class="field"><span>Rendez-vous</span><input class="input" type="time" id="mf-rdv" value="${esc(m.rdv)}"></label></div>
+    <label class="field"><span>Adresse / gymnase</span><input class="input" id="mf-lieu" value="${esc(m.lieu)}" placeholder="Gymnase, ville"></label>
+    <button class="btn gold block" type="submit">${m.id?"Enregistrer":"Ajouter le match"}</button>
+  </form>`);
+}
+function eventForm(e){
+  e = e || {titre:"",date:todayStr(),heure:"",lieu:"",description:"",covoit:false};
+  sheet(`${sheetHead(e.id?"Modifier l'événement":"Nouvel événement")}
+  <form id="ef" class="pick" data-id="${e.id||""}">
+    <label class="field"><span>Titre</span><input class="input" id="ef-titre" required value="${esc(e.titre)}" placeholder="Tournoi, sortie, goûter…"></label>
+    <div class="two"><label class="field"><span>Date</span><input class="input" type="date" id="ef-date" required value="${esc(e.date)}"></label>
+    <label class="field"><span>Heure</span><input class="input" type="time" id="ef-heure" value="${esc(e.heure)}"></label></div>
+    <label class="field"><span>Lieu</span><input class="input" id="ef-lieu" value="${esc(e.lieu)}"></label>
+    <label class="field"><span>Description</span><textarea class="input" id="ef-desc">${esc(e.description)}</textarea></label>
+    <label class="toggle" for="ef-covoit"><input type="checkbox" id="ef-covoit" ${e.covoit?"checked":""}><span>Proposer le covoiturage</span></label>
+    <button class="btn gold block" type="submit">${e.id?"Enregistrer":"Créer l'événement"}</button>
+  </form>`);
+}
+function cycleForm(c){
+  c = c || {titre:"",debut:todayStr(),fin:"",mercredi:{},vendredi:{}};
+  const sess = (k,l) => `<fieldset class="fieldset"><legend>${l}</legend>
+    <label class="field"><span>Titre</span><input class="input" id="cf-${k}-t" value="${esc(c[k]?.titre||"")}"></label>
+    <label class="field"><span>Description</span><textarea class="input" id="cf-${k}-d">${esc(c[k]?.description||"")}</textarea></label>
+    <label class="field"><span>Astuce tribune</span><textarea class="input" id="cf-${k}-a" placeholder="Ce que les parents peuvent dire, et pourquoi on travaille ça">${esc(c[k]?.astuce||"")}</textarea></label></fieldset>`;
+  sheet(`${sheetHead(c.id?"Modifier le cycle":"Nouveau cycle")}
+  <form id="cf" class="pick" data-id="${c.id||""}">
+    <label class="field"><span>Nom du cycle</span><input class="input" id="cf-titre" required value="${esc(c.titre)}" placeholder="Cycle 3 · La défense"></label>
+    <div class="two"><label class="field"><span>Début</span><input class="input" type="date" id="cf-debut" required value="${esc(c.debut)}"></label>
+    <label class="field"><span>Fin</span><input class="input" type="date" id="cf-fin" required value="${esc(c.fin)}"></label></div>
+    ${sess("mercredi","Séance du mercredi")}${sess("vendredi","Séance du vendredi")}
+    <button class="btn gold block" type="submit">${c.id?"Enregistrer":"Ajouter le cycle"}</button>
+  </form>`);
+}
+function carForm(col, id){
+  const my = me();
+  const opts = my.role === "coach" ? [fullName(my)] : (my.parents||[]).filter(p=>p&&p.prenom).map(p=>(p.prenom+" "+p.nom).trim());
+  if(!opts.length) opts.push(fullName(my));
+  sheet(`${sheetHead("Je peux emmener")}
+  <form id="carf" class="pick" data-col="${col}" data-id="${id}">
+    <div class="field"><span>Qui conduit ?</span><div class="pick">${opts.map((o,i)=>`<label class="toggle"><input type="radio" name="drv" value="${esc(o)}" ${i===0?"checked":""}><span>${esc(o)}</span></label>`).join("")}</div></div>
+    <label class="field"><span>Places libres (sans compter ${my.role==="coach"?"toi":"ton enfant"})</span>
+      <select class="input" id="carf-seats">${[1,2,3,4,5,6].map(n=>`<option ${n===3?"selected":""}>${n}</option>`).join("")}</select></label>
+    <button class="btn gold block" type="submit">Proposer ma voiture</button>
+  </form>`);
+}
+
+/* ---------- photos : compression ---------- */
+function readAsDataURL(file){ return new Promise((res,rej)=>{ const r = new FileReader(); r.onload=()=>res(r.result); r.onerror=()=>rej(r.error); r.readAsDataURL(file); }); }
+async function loadImg(file){
+  // 1) décodage direct (le plus fiable sur Android/iPhone récents)
+  if(typeof createImageBitmap === "function"){
+    try{ const b = await createImageBitmap(file, {imageOrientation:"from-image"}); return {src:b, w:b.width, h:b.height}; }catch(e){}
+    try{ const b = await createImageBitmap(file); return {src:b, w:b.width, h:b.height}; }catch(e){}
+  }
+  // 2) repli : lecture en data URL
+  const url = await readAsDataURL(file);
+  const i = await new Promise((res,rej)=>{ const im = new Image(); im.onload=()=>res(im); im.onerror=rej; im.src=url; });
+  return {src:i, w:i.naturalWidth, h:i.naturalHeight};
+}
+async function compress(file, max, q, square, pre){
+  const im = pre || await loadImg(file);
+  const img = im.src;
+  let w = im.w, h = im.h, sx=0, sy=0, sw=w, sh=h;
+  if(square){ const s = Math.min(w,h); sx=(w-s)/2; sy=(h-s)/2; sw=sh=s; w=h=Math.min(max,s); }
+  else { const r = Math.min(1, max/Math.max(w,h)); w=Math.round(w*r); h=Math.round(h*r); }
+  const c = document.createElement("canvas"); c.width=w; c.height=h;
+  c.getContext("2d").drawImage(img,sx,sy,sw,sh,0,0,w,h);
+  let out = c.toDataURL("image/jpeg", q);
+  if(out.length > 230000 && !square && max > 400){ return compress(file, Math.round(max*.75), Math.max(.5,q-.08), false, im); }
+  return out;
+}
+
+/* ---------- événements utilisateur ---------- */
+document.addEventListener("click", async ev => {
+  const g = ev.target.closest("[data-go]");
+  if(g && !ev.target.closest("[data-act]")){ go(g.dataset.go, g.dataset.id||null); return; }
+  const a = ev.target.closest("[data-act]"); if(!a) { if(S.menu){ S.menu=null; render(); } return; }
+  const act = a.dataset.act, id = a.dataset.id, col = a.dataset.col, my = me();
+  if(act !== "menu" && S.menu){ S.menu = null; }
+  switch(act){
+    case "close-bg": if(ev.target === a) closeSheet(); return;
+    case "close": closeSheet(); return;
+    case "menu": ev.stopPropagation(); S.menu = S.menu === a.dataset.key ? null : a.dataset.key; render(); return;
+    case "pick-me": ls.set("envol-me", id); go("home"); return;
+    case "profile-form": profileForm(false); return;
+    case "profile-sheet":
+      sheet(`${sheetHead("Profil")}<div class="row">${avatar(my,56)}<div><b style="font-size:18px">${esc(fullName(my))}</b><div class="small muted">${roleLabel(my)}${my.licence?" · Licence "+esc(my.licence):""}</div></div></div>
+        <button class="btn block" data-act="profile-edit">Modifier mon profil</button>
+        <button class="btn ghost block" data-act="switch">Changer de profil sur ce téléphone</button>
+        ${MODE==="demo"?`<button class="btn danger block" data-act="reset">Réinitialiser la démo</button>`:""}`); return;
+    case "profile-edit": profileForm(true); return;
+    case "switch": ls.del("envol-me"); closeSheet(); go("home"); return;
+    case "reset": ls.del("envol-demo"); ls.del("envol-me"); location.reload(); return;
+    case "pf-role": readProfileDraft(); draft.role = a.dataset.v; drawProfileForm(!!$("#pf").dataset.edit); return;
+    case "pf-color": readProfileDraft(); draft.avatar = {...draft.avatar, color:a.dataset.v}; drawProfileForm(!!$("#pf").dataset.edit); return;
+    case "pf-icon": readProfileDraft(); draft.avatar = {...draft.avatar, icon:a.dataset.v||null}; drawProfileForm(!!$("#pf").dataset.edit); return;
+    case "pick-photos": { const i = $("#photo-input"); i.value = ""; i.click(); return; }
+    case "pick-avatar": { readProfileDraft(); const i = $("#avatar-input"); i.value = ""; i.click(); return; }
+    case "pf-nophoto": readProfileDraft(); draft.photo = null; drawProfileForm(!!$("#pf").dataset.edit); return;
+    case "mf-dom": draft.domicile = a.dataset.v === "1"; a.parentElement.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed", b===a)); return;
+    case "match-form": matchForm(); return;
+    case "match-edit": matchForm(D.matches.find(x=>x.id===id)); render(); return;
+    case "match-del": confirmSheet("Supprimer ce match ?", "La présence et le covoiturage seront effacés.", async()=>{ await safe(store.del("matches",id),"Match supprimé"); go("matchs"); }); render(); return;
+    case "presence": { const d = D[col].find(x=>x.id===id); const k = col==="matches"?"presence":"participants"; const cur = !!(d[k]||{})[my.id];
+      safe(store.update(col,id,{[k]:{[my.id]:cur?null:true}}), cur?null:(col==="matches"?"Présence enregistrée":"Inscription enregistrée")); return; }
+    case "convoc": { if(!isCoach()) return; const d = D.matches.find(x=>x.id===id); const cur = !!(d.convoques||{})[a.dataset.p];
+      safe(store.update("matches",id,{convoques:{[a.dataset.p]:cur?null:true}})); return; }
+    case "car-form": { const d = D[col].find(x=>x.id===id); if(Object.values(d.cars||{}).some(c=>c&&c.owner===my.id)){ toast("Tu proposes déjà une voiture."); return; } carForm(col,id); return; }
+    case "car-del": confirmSheet("Retirer ta voiture ?", "Les inscrits seront désinscrits.", ()=>safe(store.update(col,id,{cars:{[a.dataset.car]:null}}),"Voiture retirée")); return;
+    case "seat-take": { const d = D[col].find(x=>x.id===id); const c = (d.cars||{})[a.dataset.car];
+      if(!c || on(c.passengers).length >= c.seats){ toast("Cette voiture est complète."); return; }
+      if(Object.values(d.cars||{}).some(x=>x && on(x.passengers).includes(my.id))){ toast("Tu es déjà inscrit dans une voiture."); return; }
+      safe(store.update(col,id,{cars:{[a.dataset.car]:{passengers:{[my.id]:Date.now()}}}}),"Place réservée"); return; }
+    case "seat-leave": { const d = D[col].find(x=>x.id===id); const c = (d.cars||{})[a.dataset.car];
+      if(!c || !(c.owner===my.id || a.dataset.p===my.id)) return;
+      safe(store.update(col,id,{cars:{[a.dataset.car]:{passengers:{[a.dataset.p]:null}}}})); return; }
+    case "profile-del": { if(!isCoach() || id === meId()) return; const p = prof(id); if(!p) return;
+      confirmSheet("Supprimer le profil de "+esc(fullName(p))+" ?", "Il disparaîtra de l'effectif et des listes de présence. La personne pourra recréer un profil si besoin.", ()=>safe(store.del("profiles",id),"Profil supprimé")); return; }
+    case "licence": { if(!isCoach()) return; const p = prof(id);
+      sheet(`${sheetHead("Licence")}<form id="lf" class="pick" data-id="${id}"><div class="row">${avatar(p,40)}<b>${esc(fullName(p))}</b></div>
+        <label class="field"><span>Numéro de licence</span><input class="input" id="lf-num" value="${esc(p.licence||"")}" autocomplete="off"></label>
+        <button class="btn gold block" type="submit">Enregistrer</button></form>`); return; }
+    case "photo-view": { const p = D.photos.find(x=>x.id===id); if(!p) return; const can = p.auteur===my.id || isCoach();
+      $("#layer").innerHTML = `<div class="viewer" role="dialog" aria-modal="true"><div class="bar"><button class="btn ghost" data-act="close" style="color:#fff">‹ Retour</button><span style="flex:1"></span>${can?`<button class="btn danger" data-act="photo-del" data-id="${p.id}">Supprimer</button>`:""}</div>
+        <img alt="" src="${esc(p.data)}"><div class="foot small">Ajoutée par ${esc(fullName(prof(p.auteur)))} · ${ago(p.ts)}</div></div>`; return; }
+    case "photo-del": confirmSheet("Supprimer cette photo ?", "Elle disparaîtra de l'album pour tout le monde.", ()=>safe(store.del("photos",id),"Photo supprimée")); return;
+    case "event-form": eventForm(); return;
+    case "event-edit": eventForm(D.events.find(x=>x.id===id)); render(); return;
+    case "event-del": confirmSheet("Supprimer cet événement ?", "Les inscriptions seront effacées.", async()=>{ await safe(store.del("events",id),"Événement supprimé"); go("events"); }); render(); return;
+    case "cycle-form": cycleForm(); return;
+    case "cycle-edit": cycleForm(D.cycles.find(x=>x.id===id)); render(); return;
+    case "cycle-del": confirmSheet("Supprimer ce cycle ?", "", async()=>{ await safe(store.del("cycles",id),"Cycle supprimé"); go("train"); }); render(); return;
+    case "msg-form":
+      sheet(`${sheetHead("Nouveau message")}<form id="msgf" class="pick"><label class="field"><span>Message</span><textarea class="input" id="msgf-t" required maxlength="2000" placeholder="Infos, rappel, question…"></textarea></label>
+        <label class="toggle" for="msgf-c"><input type="checkbox" id="msgf-c" checked><span>Autoriser les réponses</span></label>
+        <button class="btn gold block" type="submit">Publier</button></form>`); return;
+    case "msg-del": confirmSheet("Supprimer ce message ?", "Les réponses seront aussi supprimées.", ()=>safe(store.del("messages",id),"Message supprimé")); render(); return;
+    case "cmt-form":
+      sheet(`${sheetHead("Répondre")}<form id="cmtf" class="pick" data-id="${id}"><textarea class="input" id="cmtf-t" required maxlength="1000" aria-label="Ta réponse"></textarea><button class="btn gold block" type="submit">Envoyer</button></form>`); return;
+    case "cmt-del": safe(store.update("messages",id,{comments:{[a.dataset.c]:null}})); return;
+    case "confirm-yes": { const fn = confirmFn; confirmFn = null; closeSheet(); fn && fn(); return; }
+  }
+});
+let confirmFn = null;
+function confirmSheet(title, text, fn){ confirmFn = fn; sheet(`<h2>${title}</h2>${text?`<p class="muted" style="margin:0">${text}</p>`:""}<div class="btns"><button class="btn" data-act="close">Annuler</button><button class="btn danger" data-act="confirm-yes">Supprimer</button></div>`); }
+
+document.addEventListener("keydown", ev => {
+  if(ev.key === "Escape") closeSheet();
+  if((ev.key === "Enter" || ev.key === " ") && ev.target.matches("label[role=button]")){ ev.preventDefault(); ev.target.click(); }
+});
+
+document.addEventListener("change", async ev => {
+  const t = ev.target;
+  if(t.id === "avatar-input" && t.files && t.files[0]){
+    const file = t.files[0]; t.value = "";
+    if(!draft || !$("#pf")){ return; }
+    try{ draft.photo = await compress(file, 240, .82, true); }
+    catch(e){ console.error(e); toast("Impossible de lire cette image (format non pris en charge)."); }
+    if($("#pf")) drawProfileForm(!!$("#pf").dataset.edit);
+  }
+  if(t.id === "photo-input" && t.files && t.files.length){
+    const files = [...t.files].slice(0,10); t.value = "";
+    toast(files.length>1?`Envoi de ${files.length} photos…`:"Envoi de la photo…");
+    let ok = 0, bad = 0;
+    for(const f of files){
+      let data = null;
+      try{ data = await compress(f, 1280, .72, false); }catch(e){ console.error(e); bad++; continue; }
+      if(await safe(store.set("photos", uid(), {auteur:me().id, data, ts:Date.now()}))) ok++; else bad++;
+    }
+    if(ok) toast(ok>1?`${ok} photos ajoutées`:"Photo ajoutée" + (bad?` (${bad} non lue${bad>1?"s":""})`:""));
+    else toast("Aucune photo n'a pu être ajoutée. Essaie une photo JPEG ou PNG.");
+  }
+});
+
+document.addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const f = ev.target, my = me();
+  if(f.id === "codef"){
+    const c = normCode(val("code-in"));
+    if(await checkCode(c)){ ls.set("envol-team", c); boot(); }
+    else renderCode("Ce code n'est pas le bon. Demande-le au coach.");
+    return;
+  }
+  if(f.id === "pf"){
+    readProfileDraft(); const p = draft;
+    if(!p.prenom || !p.nom){ toast("Indique ton prénom et ton nom."); return; }
+    const doc = {prenom:p.prenom, nom:p.nom, role:p.role==="coach"?"coach":"joueur", numero:p.role==="coach"?"":(p.numero||""),
+      parents:p.role==="coach"?[]:p.parents.filter(x=>x.prenom||x.nom), photo:p.photo||null, avatar:p.avatar, licence:p.licence||"", ts:p.ts||Date.now()};
+    const id = f.dataset.edit ? my.id : uid();
+    if(await safe(store.set("profiles", id, doc), f.dataset.edit?"Profil mis à jour":"Bienvenue "+p.prenom+" !")){ ls.set("envol-me", id); closeSheet(); render(); }
+  }
+  if(f.id === "mf"){
+    const d = {adversaire:val("mf-adv"), date:val("mf-date"), heure:val("mf-heure"), rdv:val("mf-rdv"), lieu:val("mf-lieu"), domicile:draft.domicile};
+    if(f.dataset.id){ if(await safe(store.update("matches", f.dataset.id, d), "Match modifié")) closeSheet(); }
+    else { const id = uid(); if(await safe(store.set("matches", id, {...d, presence:{}, convoques:{}, cars:{}, ts:Date.now()}), "Match ajouté")){ closeSheet(); go("match", id); } }
+  }
+  if(f.id === "ef"){
+    const d = {titre:val("ef-titre"), date:val("ef-date"), heure:val("ef-heure"), lieu:val("ef-lieu"), description:val("ef-desc"), covoit:$("#ef-covoit").checked};
+    if(f.dataset.id){ if(await safe(store.update("events", f.dataset.id, d), "Événement modifié")) closeSheet(); }
+    else { const id = uid(); if(await safe(store.set("events", id, {...d, auteur:my.id, participants:{}, cars:{}, ts:Date.now()}), "Événement créé")){ closeSheet(); go("event", id); } }
+  }
+  if(f.id === "cf"){
+    const s = k => ({titre:val(`cf-${k}-t`), description:val(`cf-${k}-d`), astuce:val(`cf-${k}-a`)});
+    const d = {titre:val("cf-titre"), debut:val("cf-debut"), fin:val("cf-fin"), mercredi:s("mercredi"), vendredi:s("vendredi")};
+    if(d.fin < d.debut){ toast("La fin doit être après le début."); return; }
+    if(f.dataset.id){ if(await safe(store.set("cycles", f.dataset.id, {...D.cycles.find(x=>x.id===f.dataset.id), ...d}), "Cycle modifié")) closeSheet(); }
+    else { const id = uid(); if(await safe(store.set("cycles", id, {...d, auteur:my.id, ts:Date.now()}), "Cycle ajouté")){ closeSheet(); go("cycle", id); } }
+  }
+  if(f.id === "carf"){
+    const drv = (f.querySelector("input[name=drv]:checked")||{}).value || fullName(my);
+    const seats = Number($("#carf-seats").value)||1;
+    if(await safe(store.update(f.dataset.col, f.dataset.id, {cars:{[uid()]:{owner:my.id, driver:drv, seats, passengers:{}}}}), "Voiture proposée")) closeSheet();
+  }
+  if(f.id === "lf"){ if(await safe(store.update("profiles", f.dataset.id, {licence:val("lf-num")}), "Licence enregistrée")) closeSheet(); }
+  if(f.id === "msgf"){
+    const t = val("msgf-t"); if(!t) return;
+    if(await safe(store.set("messages", uid(), {auteur:my.id, texte:t, ts:Date.now(), commentsOn:$("#msgf-c").checked, comments:{}}), "Message publié")) closeSheet();
+  }
+  if(f.id === "cmtf"){
+    const t = val("cmtf-t"); if(!t) return;
+    if(await safe(store.update("messages", f.dataset.id, {comments:{[uid()]:{auteur:my.id, texte:t, ts:Date.now()}}}))) closeSheet();
+  }
+});
+
+boot();
+if("serviceWorker" in navigator && location.protocol === "https:"){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
+</script>
+</body>
+</html>
